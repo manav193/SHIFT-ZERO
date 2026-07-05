@@ -15,6 +15,9 @@ func _ready() -> void:
     _play_btn.pressed.connect(_on_play_pressed)
     _settings_btn.pressed.connect(_on_settings_pressed)
     _quit_btn.pressed.connect(_on_quit_pressed)
+    _wire_button(_play_btn)
+    _wire_button(_settings_btn)
+    _wire_button(_quit_btn)
 
 
 func _on_play_pressed() -> void:
@@ -31,3 +34,17 @@ func _on_settings_pressed() -> void:
 
 func _on_quit_pressed() -> void:
     get_tree().quit()
+
+
+func _wire_button(button: Button) -> void:
+    button.mouse_entered.connect(func() -> void: _button_to(button, Vector2(1.04, 1.04), 0.08))
+    button.mouse_exited.connect(func() -> void: _button_to(button, Vector2.ONE, 0.10))
+    button.button_down.connect(func() -> void: _button_to(button, Vector2(0.94, 0.94), 0.05))
+    button.button_up.connect(func() -> void: _button_to(button, Vector2(1.04, 1.04), 0.08))
+
+
+func _button_to(button: Button, target_scale: Vector2, duration: float) -> void:
+    var tween := create_tween()
+    tween.set_trans(Tween.TRANS_QUAD)
+    tween.set_ease(Tween.EASE_OUT)
+    tween.tween_property(button, "scale", target_scale, duration)

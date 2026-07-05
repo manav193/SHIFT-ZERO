@@ -20,9 +20,12 @@ const GameplayConfig := preload("res://src/gameplay/gameplay_config.gd")
 
 @export var difficulty: NodePath
 
+@onready var _visual: ColorRect = $Visual
+
 ## +1 -> gravity pulls DOWN. -1 -> gravity pulls UP.
 var _gravity_dir: int = 1
 var _difficulty: Node
+var _visual_tween: Tween
 
 ## Timestamp (ms) of the last accepted flip -- used to enforce cooldown.
 var _last_flip_ms: int = -100000
@@ -95,6 +98,7 @@ func set_gravity_direction(dir: int) -> void:
         "position": position,
         "t_ms": Time.get_ticks_msec(),
     })
+    _play_flip_juice()
     print("Player", "gravity flipped -> %d" % _gravity_dir)
 
 
@@ -114,6 +118,7 @@ func _detect_landing() -> void:
             "surface": "ceiling" if is_on_ceiling() else "floor",
             "t_ms": Time.get_ticks_msec(),
         })
+        _play_land_juice()
     _was_on_surface = on_surface
 
 
@@ -184,3 +189,28 @@ func _difficulty_speed_multiplier() -> float:
     if _difficulty == null or not _difficulty.has_method("speed_multiplier"):
         return 1.0
     return float(_difficulty.speed_multiplier())
+
+
+func _play_flip_juice() -> void:
+    _reset_visual_tween()
+    _visual.modulate = Color(1.0, 1.0, 1.0, 1.0)
+    _visual.scale = Vector2(1.22, 0.82)
+    _visual_tween = create_tween()
+    _visual_tween.set_trans(Tween.TRANS_BACK)
+    _visual_tween.set_ease(Tween.EASE_OUT)
+    _visual_tween.tween_property(_visual, "scale", Vector2.ONE, 0.16)
+    _visual_tween.parallel().tween_property(_visual, "modulate", Color(0.0, 0.941, 1.0, 1.0), 0.18)
+
+
+func _play_land_juice() -> void:
+    _reset_visual_tween()
+    _visual.scale = Vector2(1.18, 0.76) if _gravity_dir > 0 else Vector2(1.18, 0.76)
+    _visual_tween = create_tween()
+    _visual_tween.set_trans(Tween.TRANS_ELASTIC)
+    _visual_tween.set_ease(Tween.EASE_OUT)
+    _visual_tween.tween_property(_visual, "scale", Vector2.ONE, 0.22)
+
+
+func _reset_visual_tween() -> void:
+    if _visual_tween != null and _visual_tween.is_valid():
+        _visual_tween.kill()

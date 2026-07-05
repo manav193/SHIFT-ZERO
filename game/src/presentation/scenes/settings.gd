@@ -20,6 +20,8 @@ func _ready() -> void:
     _master_slider.value_changed.connect(_on_master_changed)
     _haptics_toggle.toggled.connect(_on_haptics_toggled)
     _back_btn.pressed.connect(_on_back_pressed)
+    _wire_button(_haptics_toggle)
+    _wire_button(_back_btn)
     _load_current_values()
     _loading = false
 
@@ -64,3 +66,17 @@ func _apply_master_volume(value: float) -> void:
 
 func _update_master_label(value: float) -> void:
     _master_value.text = "%d%%" % int(round(clampf(value, 0.0, 1.0) * 100.0))
+
+
+func _wire_button(button: Button) -> void:
+    button.mouse_entered.connect(func() -> void: _button_to(button, Vector2(1.04, 1.04), 0.08))
+    button.mouse_exited.connect(func() -> void: _button_to(button, Vector2.ONE, 0.10))
+    button.button_down.connect(func() -> void: _button_to(button, Vector2(0.94, 0.94), 0.05))
+    button.button_up.connect(func() -> void: _button_to(button, Vector2(1.04, 1.04), 0.08))
+
+
+func _button_to(button: Button, target_scale: Vector2, duration: float) -> void:
+    var tween := create_tween()
+    tween.set_trans(Tween.TRANS_QUAD)
+    tween.set_ease(Tween.EASE_OUT)
+    tween.tween_property(button, "scale", target_scale, duration)

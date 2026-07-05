@@ -21,6 +21,7 @@ var _shake_offset: Vector2 = Vector2.ZERO
 
 var _smoothing_speed: float = 5.0
 var _look_ahead_x: float = 200.0
+var _base_look_ahead_x: float = 200.0
 var _shake_decay: float = 1.4
 var _shake_max_offset: float = 80.0
 var _impact_trauma: float = 0.65
@@ -62,7 +63,7 @@ func _process(delta: float) -> void:
         return
     var desired := _base_position
     if follow_x:
-        desired.x = _target.position.x + _look_ahead_x
+        desired.x = _target.position.x + _dynamic_look_ahead()
     if follow_y:
         desired.y = _target.position.y
     var t: float = 1.0 - exp(-_smoothing_speed * delta)
@@ -91,7 +92,7 @@ func _update_shake(delta: float) -> void:
 
 
 func _on_flipped(_p: Dictionary) -> void:
-    shake(0.15)
+    shake(0.22)
 
 
 func _on_landed(_p: Dictionary) -> void:
@@ -100,7 +101,7 @@ func _on_landed(_p: Dictionary) -> void:
 
 func _on_run_finished(_p: Dictionary) -> void:
     # Camera impact -- big trauma spike on death.
-    shake(_impact_trauma)
+    shake(maxf(_impact_trauma, 0.9))
 
 
 func _resolve_target() -> void:
@@ -119,6 +120,7 @@ func _reload_tunables() -> void:
     if rc != null:
         _smoothing_speed = rc.get_float("gameplay.camera_smoothing_speed", 5.0)
         _look_ahead_x = rc.get_float("gameplay.camera_look_ahead_x", 200.0)
+        _base_look_ahead_x = _look_ahead_x
         _shake_decay = rc.get_float("gameplay.camera_shake_decay_per_s", 1.4)
         _shake_max_offset = rc.get_float("gameplay.camera_shake_max_offset_px", 80.0)
         _impact_trauma = rc.get_float("gameplay.camera_impact_trauma", 0.65)
@@ -135,3 +137,12 @@ func _update_responsive_zoom() -> void:
         return
     var target_zoom := clampf(viewport_height / _design_view_height, 0.45, 1.0)
     zoom = Vector2(target_zoom, target_zoom)
+
+
+func _dynamic_look_ahead() -> float:
+    var speed := 0.0
+    if _target is CharacterBody2D:
+        speed = abs((_target as CharacterBody2D).velocity.x)
+    var speed_bonus := clampf(speed * 0.28, 0.0, 220.0)
+    _look_ahead_x = lerpf(_look_ahead_x, _base_look_ahead_x + speed_bonus, 0.08)
+    return _look_ahead_x

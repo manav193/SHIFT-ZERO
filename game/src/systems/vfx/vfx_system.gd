@@ -23,7 +23,7 @@ func _on_flipped(payload: Dictionary) -> void:
     var pos: Variant = payload.get("position", Vector2.ZERO)
     if not (pos is Vector2):
         return
-    _burst(pos, Color(0.0, 0.941, 1.0, 1.0), 26, 320.0, 0.4)
+    _burst(pos, Color(0.0, 0.941, 1.0, 1.0), 34, 380.0, 0.42)
 
 
 func _on_landed(payload: Dictionary) -> void:
@@ -41,7 +41,7 @@ func _on_run_finished(payload: Dictionary) -> void:
         pos = _find_player_position()
     if not (pos is Vector2):
         return
-    _burst(pos, Color(1.0, 0.271, 0.325, 1.0), 60, 560.0, 0.85)
+    _burst(pos, Color(1.0, 0.271, 0.325, 1.0), 90, 720.0, 0.95)
 
 
 func _burst(pos: Vector2, color: Color, amount: int, speed: float, lifetime: float) -> void:
