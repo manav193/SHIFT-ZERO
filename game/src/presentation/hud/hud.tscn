@@ -1,0 +1,159 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8szm15hud00001"]
+
+[ext_resource type="Script" path="res://src/presentation/hud/hud.gd" id="1_hud_script"]
+
+[sub_resource type="StyleBoxFlat" id="ModalPanelBox_m15"]
+bg_color = Color(0.05, 0.06, 0.12, 0.88)
+border_color = Color(0, 0.941, 1, 0.5)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="HUD" type="Control"]
+process_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_hud_script")
+
+[node name="Top" type="Control" parent="."]
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 200.0
+mouse_filter = 2
+
+[node name="PauseBtn" type="Button" parent="Top"]
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 180.0
+offset_bottom = 130.0
+text = "II"
+theme_override_font_sizes/font_size = 48
+
+[node name="Score" type="Label" parent="Top"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 20.0
+offset_right = 200.0
+offset_bottom = 130.0
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 96
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="Best" type="Label" parent="Top"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -360.0
+offset_top = 45.0
+offset_right = -40.0
+offset_bottom = 105.0
+text = "BEST 0"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
+
+[node name="PauseModal" type="Control" parent="."]
+process_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="PauseModal"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="Panel" type="PanelContainer" parent="PauseModal"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -260.0
+offset_right = 300.0
+offset_bottom = 260.0
+theme_override_styles/panel = SubResource("ModalPanelBox_m15")
+
+[node name="V" type="VBoxContainer" parent="PauseModal/Panel"]
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="Title" type="Label" parent="PauseModal/Panel/V"]
+text = "PAUSED"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="ResumeBtn" type="Button" parent="PauseModal/Panel/V"]
+custom_minimum_size = Vector2(0, 120)
+text = "RESUME"
+theme_override_font_sizes/font_size = 42
+
+[node name="RestartBtn" type="Button" parent="PauseModal/Panel/V"]
+custom_minimum_size = Vector2(0, 120)
+text = "RESTART"
+theme_override_font_sizes/font_size = 42
+
+[node name="GameOverModal" type="Control" parent="."]
+process_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="GameOverModal"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.65)
+
+[node name="Panel" type="PanelContainer" parent="GameOverModal"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -360.0
+offset_top = -400.0
+offset_right = 360.0
+offset_bottom = 400.0
+theme_override_styles/panel = SubResource("ModalPanelBox_m15")
+
+[node name="V" type="VBoxContainer" parent="GameOverModal/Panel"]
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="Title" type="Label" parent="GameOverModal/Panel/V"]
+text = "GAME OVER"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 80
+theme_override_colors/font_color = Color(1, 0.271, 0.325, 1)
+
+[node name="Score" type="Label" parent="GameOverModal/Panel/V"]
+text = "SCORE 0"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 56
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="Best" type="Label" parent="GameOverModal/Panel/V"]
+text = "BEST 0"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
+
+[node name="Distance" type="Label" parent="GameOverModal/Panel/V"]
+text = "DISTANCE 0"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.75, 0.75, 0.8, 1)
+
+[node name="RestartBtn" type="Button" parent="GameOverModal/Panel/V"]
+custom_minimum_size = Vector2(0, 140)
+text = "RESTART"
+theme_override_font_sizes/font_size = 48

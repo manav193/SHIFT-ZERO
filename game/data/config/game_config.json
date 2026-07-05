@@ -20,5 +20,11 @@
   "obstacle_first_spawn_x": 1500.0,
   "obstacle_spawn_horizon_x": 2500.0,
   "obstacle_despawn_distance_behind": 1500.0,
-  "run_restart_tap_cooldown_ms": 500
+  "run_restart_tap_cooldown_ms": 500,
+  "difficulty_speed_mult_start": 1.0,
+  "difficulty_speed_mult_max": 2.0,
+  "difficulty_speed_growth_per_s": 0.02,
+  "difficulty_spacing_shrink_per_s": 0.008,
+  "difficulty_spacing_min_mult": 0.55,
+  "fair_min_flip_gap": 1000.0
 }

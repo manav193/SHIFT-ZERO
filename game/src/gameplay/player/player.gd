@@ -20,8 +20,8 @@ extends CharacterBody2D
 const Events := preload("res://src/core/events.gd")
 const GameplayConfig := preload("res://src/gameplay/gameplay_config.gd")
 
-## Emitted immediately after the gravity direction changes.
-signal gravity_flipped(new_direction: int)
+## Node this player should track. Set by the parent scene, usually the Player.
+@export var difficulty: NodePath
 
 ## +1 → gravity pulls DOWN (player falls toward floor).
 ## -1 → gravity pulls UP   (player rises toward ceiling).

@@ -25,6 +25,13 @@ const RUN_RESUMED           := "run/resumed"
 const MODIFIER_ACTIVATED    := "modifier/activated"
 const MODIFIER_EXPIRED      := "modifier/expired"
 
+# ---------- Player ----------
+const PLAYER_GRAVITY_FLIPPED := "player/gravity_flipped"
+
+# ---------- Score ----------
+const SCORE_UPDATED         := "score/updated"
+const BEST_SCORE_CHANGED    := "score/best_changed"
+
 # ---------- Save / entitlements ----------
 const SAVE_PERSISTED        := "save/persisted"
 const ENTITLEMENTS_CHANGED  := "entitlements/changed"
