@@ -17,15 +17,18 @@ extends CharacterBody2D
 
 const Events := preload("res://src/core/events.gd")
 const GameplayConfig := preload("res://src/gameplay/gameplay_config.gd")
+const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 
 @export var difficulty: NodePath
 
 @onready var _visual: ColorRect = $Visual
+@onready var _trail: Line2D = $Trail
 
 ## +1 -> gravity pulls DOWN. -1 -> gravity pulls UP.
 var _gravity_dir: int = 1
 var _difficulty: Node
 var _visual_tween: Tween
+var _skin: Dictionary = SkinCatalog.by_id(SkinCatalog.CLASSIC)
 
 ## Timestamp (ms) of the last accepted flip -- used to enforce cooldown.
 var _last_flip_ms: int = -100000
@@ -55,6 +58,8 @@ var _was_on_surface: bool = false
 func _ready() -> void:
     _reload_tunables()
     _resolve_difficulty()
+    _load_skin()
+    _apply_skin()
     add_to_group("player")
     EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
@@ -80,6 +85,7 @@ func _physics_process(delta: float) -> void:
     if not _active:
         return
     _update_powerup_expiry()
+    _update_trail()
     velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * delta
     velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
     velocity.x = _run_speed * speed_multiplier()
@@ -102,6 +108,7 @@ func set_gravity_direction(dir: int) -> void:
     EventBus.emit(Events.PLAYER_GRAVITY_FLIPPED, {
         "dir": _gravity_dir,
         "position": position,
+        "color": _skin.get("flash", Color(0.0, 0.941, 1.0, 1.0)),
         "t_ms": Time.get_ticks_msec(),
     })
     _play_flip_juice()
@@ -163,6 +170,7 @@ func _detect_landing() -> void:
         EventBus.emit(Events.PLAYER_LANDED, {
             "position": position,
             "surface": "ceiling" if is_on_ceiling() else "floor",
+            "color": _skin.get("trail", Color(1.0, 0.169, 0.839, 1.0)),
             "t_ms": Time.get_ticks_msec(),
         })
         _play_land_juice()
@@ -192,6 +200,7 @@ func _on_run_started(_payload: Dictionary) -> void:
     _double_score_until_ms = 0
     _magnet_announced_expired = true
     _double_score_announced_expired = true
+    _trail.clear_points()
     print("Player", "activated")
 
 
@@ -243,6 +252,31 @@ func _difficulty_speed_multiplier() -> float:
     return float(_difficulty.speed_multiplier())
 
 
+func _load_skin() -> void:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    var result: Result = save.load_state()
+    if not result.ok:
+        return
+    var state: Dictionary = result.value
+    var progression: Dictionary = state.get("progression", {})
+    _skin = SkinCatalog.by_id(str(progression.get("equipped_skin", SkinCatalog.CLASSIC)))
+
+
+func _apply_skin() -> void:
+    _visual.color = _skin.get("player", Color(0.0, 0.941, 1.0, 1.0))
+    _visual.modulate = Color.WHITE
+    _trail.default_color = _skin.get("trail", Color(0.0, 0.941, 1.0, 0.65))
+    _trail.top_level = true
+
+
+func _update_trail() -> void:
+    _trail.add_point(global_position)
+    while _trail.get_point_count() > 14:
+        _trail.remove_point(0)
+
+
 func _update_powerup_expiry() -> void:
     var now := Time.get_ticks_msec()
     if not _magnet_announced_expired and now >= _magnet_until_ms:
@@ -261,7 +295,8 @@ func _play_flip_juice() -> void:
     _visual_tween.set_trans(Tween.TRANS_BACK)
     _visual_tween.set_ease(Tween.EASE_OUT)
     _visual_tween.tween_property(_visual, "scale", Vector2.ONE, 0.16)
-    _visual_tween.parallel().tween_property(_visual, "modulate", Color(0.0, 0.941, 1.0, 1.0), 0.18)
+    _visual_tween.parallel().tween_property(_visual, "modulate", _skin.get("flash", Color(0.0, 0.941, 1.0, 1.0)), 0.08)
+    _visual_tween.tween_property(_visual, "modulate", Color.WHITE, 0.12)
 
 
 func _play_land_juice() -> void:

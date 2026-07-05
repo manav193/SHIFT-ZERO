@@ -10,6 +10,7 @@
 extends Node
 
 const Events := preload("res://src/core/events.gd")
+const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 
 
 func _ready() -> void:
@@ -25,7 +26,7 @@ func _on_flipped(payload: Dictionary) -> void:
     var pos: Variant = payload.get("position", Vector2.ZERO)
     if not (pos is Vector2):
         return
-    _burst(pos, Color(0.0, 0.941, 1.0, 1.0), 34, 380.0, 0.42)
+    _burst(pos, _payload_color(payload, "flash"), 34, 380.0, 0.42)
 
 
 func _on_landed(payload: Dictionary) -> void:
@@ -34,7 +35,7 @@ func _on_landed(payload: Dictionary) -> void:
         return
     var surface: String = str(payload.get("surface", "floor"))
     var dir: Vector2 = Vector2.UP if surface == "floor" else Vector2.DOWN
-    _burst_directional(pos, dir, Color(1.0, 0.169, 0.839, 1.0), 18, 240.0, 0.35)
+    _burst_directional(pos, dir, _payload_color(payload, "trail"), 18, 240.0, 0.35)
 
 
 func _on_run_finished(payload: Dictionary) -> void:
@@ -43,7 +44,7 @@ func _on_run_finished(payload: Dictionary) -> void:
         pos = _find_player_position()
     if not (pos is Vector2):
         return
-    _burst(pos, Color(1.0, 0.271, 0.325, 1.0), 90, 720.0, 0.95)
+    _burst(pos, _skin_color("death"), 90, 720.0, 0.95)
 
 
 func _on_coin_collected(payload: Dictionary) -> void:
@@ -142,3 +143,23 @@ func _find_player_position() -> Variant:
     if p is Node2D:
         return (p as Node2D).position
     return null
+
+
+func _payload_color(payload: Dictionary, fallback_key: String) -> Color:
+    var color: Variant = payload.get("color", null)
+    if color is Color:
+        return color
+    return _skin_color(fallback_key)
+
+
+func _skin_color(key: String) -> Color:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return SkinCatalog.by_id(SkinCatalog.CLASSIC).get(key, Color.WHITE)
+    var result: Result = save.load_state()
+    if not result.ok:
+        return SkinCatalog.by_id(SkinCatalog.CLASSIC).get(key, Color.WHITE)
+    var state: Dictionary = result.value
+    var progression: Dictionary = state.get("progression", {})
+    var skin := SkinCatalog.by_id(str(progression.get("equipped_skin", SkinCatalog.CLASSIC)))
+    return skin.get(key, Color.WHITE)
