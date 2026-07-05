@@ -26,6 +26,7 @@ Every milestone has **exit criteria** — nothing rolls forward on vibes.
 - ✅ CI green on `main`.
 - ✅ Layer-dependency script fails a deliberately-invalid PR (test the guardrails).
 - ✅ Startup < 3 s on T-Low device (measured).
+- ✅ **All addenda (`15_M0_ADDENDA.md`) delivered:** Analytics + Remote Config abstractions live; Accessibility settings schema + AccessibilityBus wired; Ghost Runs architectural seams (`IInputRecorder`, ADR-012) in place; `GameplayConfig` data-driven wrapper functional.
 
 ---
 
@@ -164,7 +165,7 @@ Rough plan; refined per user feedback.
 
 | Version | Theme | Highlights |
 |---|---|---|
-| **v1.1** | GPGS layer + first content drop | Cloud save, achievements, leaderboards; +5 modifiers; +2 biomes |
+| **v1.1** | GPGS layer + Ghost Runs + first content drop | Cloud save, achievements, leaderboards; **Ghost Runs** (record + replay a friend's Daily Challenge run — architecture seams already in place from M0, see `15_M0_ADDENDA.md §A4`); +5 modifiers; +2 biomes |
 | **v1.2** | Seasonal events | 4-week limited-time events; custom leaderboard backend |
 | **v1.3** | Accessibility & polish | Additional colorblind sets; UI redesign passes; extra languages |
 | **v1.4** | Cosmetics expansion | New skins, trails, HUD themes; season pass (ethical, ad-only unlock path) |

@@ -1,0 +1,23 @@
+{
+  "gameplay.player_base_speed": 420.0,
+  "gameplay.gravity_magnitude": 1600.0,
+  "gameplay.terminal_velocity": 1800.0,
+  "gameplay.tap_flip_cooldown_ms": 80,
+  "gameplay.invulnerability_after_continue_s": 1.5,
+  "gameplay.modifier_default_duration_s": 20.0,
+  "gameplay.modifier_min_gap_s": 8.0,
+  "gameplay.score_distance_per_point": 4.0,
+
+  "difficulty.starting_obstacle_density": 0.6,
+  "difficulty.speed_ramp_per_10s": 0.04,
+
+  "ads.interstitial_cooldown_s": 180,
+  "ads.max_interstitials_per_session": 3,
+  "ads.rewarded_continue_enabled": true,
+
+  "flag_modifier_portals_enabled": true,
+  "flag_daily_challenge_enabled": true,
+  "flag_ghost_runs_enabled": false,
+  "flag_gpgs_enabled": false,
+  "flag_debug_overlay_enabled": false
+}

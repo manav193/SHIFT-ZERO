@@ -1,0 +1,26 @@
+# SHIFT // ZERO — gdlint config
+# See docs/07_CODING_STANDARDS.md
+
+max-line-length: 120
+max-file-lines: 400
+max-public-methods: 20
+tab-characters: 1
+
+function-arguments-number: 6
+function-variables-number: 12
+
+class-definitions-order:
+    - tools
+    - classnames
+    - extends
+    - docstrings
+    - signals
+    - enums
+    - consts
+    - exports
+    - pubvars
+    - prvvars
+    - onreadypubvars
+    - onreadyprvvars
+    - staticvars
+    - others

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (gdlint + Python)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install gdtoolkit
+        run: pip install "gdtoolkit==4.*"
+      - name: Run gdlint
+        run: gdlint game/src game/tests
+      - name: Verify no forbidden patterns
+        run: python scripts/check_forbidden.py
+
+  layer_deps:
+    name: Layer dependency guard
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Enforce layer boundaries
+        run: python scripts/check_layer_deps.py game/src
+
+  unit_tests:
+    name: Godot unit tests (GUT, headless)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot binary
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-4.3-linux
+      - name: Download Godot 4.3
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -L -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip /tmp/godot.zip -d ~/godot
+          chmod +x ~/godot/Godot_v4.3-stable_linux.x86_64
+      - name: Import project (headless)
+        run: ~/godot/Godot_v4.3-stable_linux.x86_64 --headless --path game --editor --quit || true
+      - name: Run GUT
+        run: |
+          ~/godot/Godot_v4.3-stable_linux.x86_64 \
+            --headless --path game \
+            -s addons/gut/gut_cmdln.gd \
+            -gdir=res://tests/unit -gexit || exit 1
+
+  perf_smoke:
+    name: Perf smoke (headless)
+    runs-on: ubuntu-22.04
+    needs: unit_tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder — perf gate wires up in M1
+        run: echo "Perf gate activates once first playable scene lands (M1)."

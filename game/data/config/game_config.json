@@ -1,0 +1,13 @@
+{
+  "target_fps": 60,
+  "physics_fps": 60,
+  "boot_timeout_ms": 800,
+  "player_base_speed": 420.0,
+  "gravity_magnitude": 1600.0,
+  "terminal_velocity": 1800.0,
+  "tap_flip_cooldown_ms": 80,
+  "invulnerability_after_continue_s": 1.5,
+  "modifier_default_duration_s": 20.0,
+  "modifier_min_gap_s": 8.0,
+  "score_distance_per_point": 4.0
+}

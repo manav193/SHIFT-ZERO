@@ -10,105 +10,131 @@ Build a mobile app: commercial-quality indie game "SHIFT // ZERO".
 - Clean modular scalable architecture
 - Publish to Google Play, continuously updated
 
-Instruction: Do NOT generate gameplay yet. Complete architecture & planning tasks first (15 items). Wait for approval before implementation.
+Session 1 instruction: complete architecture & planning first (15 items), no gameplay code, wait for approval.
+Session 2 approval with 5 additions (analytics abstraction, remote config abstraction, accessibility day-one, ghost runs v1.1 arch-ready, data-driven gameplay values). Then: "Approved — start M0".
 
-## User Choices (session 1)
+## User Choices
 
-- **Genre:** One-finger 2D gravity-shift action with rotating gameplay modifiers (Gravity Flip, Low-G, Time Slow, Magnetic Walls, Portals, Blackout, Reverse Controls, etc.)
-- **Engine choice:** Main agent to compare Unity / Godot 4 / Flutter+Flame / Phaser and recommend
+- **Genre:** One-finger 2D gravity-shift action with rotating gameplay modifiers
+- **Engine:** Godot 4.3+ LTS (recommended by main agent, user accepted)
 - **Monetization:** Free with AdMob rewarded + optional Remove-Ads IAP + cosmetics. Never pay-to-win.
-- **Online:** Offline-first, Google Play Games (cloud save, achievements, leaderboards) as future add-on
+- **Online:** Offline-first, GPGS (cloud save, achievements, leaderboards) v1.1
 - **Art style:** Neon / Cyberpunk Minimalist
-- **Also required:** Foldable + Chromebook + desktop-web responsive, lightweight download, long-term maintainable architecture, commercial indie polish (not prototype)
+- **Ghost Runs:** planned v1.1, architectural seams in place from M0
+- **Accessibility:** day-one (colorblind palettes, adjustable VFX, haptic toggle, audio controls)
+- **Data-driven gameplay:** everywhere possible
 
-## Core Requirements (static)
-
-- 60 FPS on 2019 mid-range Android (Snapdragon 6xx, 3 GB RAM)
-- Cold start ≤ 3 s, warm start ≤ 1 s
-- Offline-first save, corruption-safe, migrate-safe
-- One-thumb reachable UI
-- Colorblind + reduce-motion accessibility
-- 8+ launch languages
-- No dark monetization patterns
-- Ethical rewarded ads + optional IAP (Remove Ads + cosmetics)
-
-## Recommended Stack (documented in /app/docs/02_TECH_STACK.md)
-
-- **Engine:** Godot 4.3+ LTS (GDScript primary, C# escape hatch)
-- **Ads:** Google AdMob via community plugin (+ UMP consent)
-- **IAP:** Google Play Billing v6+
-- **Backend services:** Firebase (Analytics, Crashlytics, Remote Config)
-- **Cloud save (v1.1):** Google Play Games Services v2
-- **CI/CD:** GitHub Actions (matrix: Android debug/release + HTML5)
-- **Backend (v1.2+):** Cloudflare Workers + D1 for signed leaderboard submissions
-
-## Architecture Highlights
+## Architecture Highlights (session 1 + session 2 additions)
 
 - 5-layer strict architecture: Presentation → Gameplay → Systems → Services → Core
 - EventBus + ServiceLocator with typed `Result<T>` at all service boundaries
-- Deterministic seeded RNG with named streams for replayable runs + Daily Challenge
+- Deterministic seeded RNG with named streams (world / spawn / modifier / cosmetic / vfx)
 - Save format: JSON + SHA-256 checksum + atomic double-buffered write + emergency slot + migrations
-- Modifier registry pattern — adding a new modifier requires no engine code changes
+- Modifier registry pattern — new modifiers require no engine changes
 - Layer-dependency enforced by CI script
-- Perf gate on CI — PR fails if p95 frame > 17 ms
+- **Analytics abstraction (IAnalyticsService)** — live from M0 via ConsoleAnalyticsService, Firebase in M4
+- **Remote Config abstraction (IRemoteConfigService)** — live from M0 via StaticRemoteConfigService, Firebase in M4
+- **GameplayConfig** — three-layer lookup (Remote → build defaults → hardcoded fallback), all tunable values live in `.tres` / JSON
+- **Accessibility** built into `ISettingsService` schema from day one (palette, VFX level, haptics, audio buses)
+- **Ghost Runs seam** — `IInputRecorder` + `NoopInputRecorder` + ADR-012 draft ready for v1.1
 
-## Deliverables — Session 1 (Planning Phase)
+## What's implemented — M0 Foundation
 
-Created full pre-production package under `/app/docs/`:
+### Repo scaffold
+- `/app/README.md`, `LICENSE`, `CHANGELOG.md`, `.editorconfig`, `.gitattributes`, `.gitignore`
+- `.github/workflows/`: `ci.yml` (lint + layer_deps + unit tests + perf_smoke placeholder), `build-android.yml`, `build-web.yml`
+- `.github/PULL_REQUEST_TEMPLATE.md`, `ISSUE_TEMPLATE/{bug,feature}.md`
 
-| # | File | Status |
-|---|---|---|
-| 00 | Executive Summary | ✅ done |
-| 01 | Requirements Analysis (FR + NFR + KPIs + Risks) | ✅ done |
-| 02 | Tech Stack (Unity vs Godot vs Flutter+Flame vs Phaser comparison + recommendation) | ✅ done |
-| 03 | System Architecture (layers, data flow, bootstrap, determinism, threading) | ✅ done |
-| 04 | Folder Structure (production-ready layout) | ✅ done |
-| 05 | GDD Skeleton (20 sections) | ✅ done |
-| 06 | TDD Skeleton (20 sections) | ✅ done |
-| 07 | Coding Standards & Naming Conventions (enforceable rules) | ✅ done |
-| 08 | Responsive Design Strategy (phones, tablets, foldables, desktop, ultra-wide) | ✅ done |
-| 09 | Performance Optimization Strategy (device tiers, frame/memory budgets, CI gate) | ✅ done |
-| 10 | Save System Strategy (atomic writes, migrations, cloud sync, recovery) | ✅ done |
-| 11 | Game State Management Strategy (scopes, FSMs, EventBus discipline) | ✅ done |
-| 12 | Asset Management Strategy (atlasing, PAD, loading, versioning) | ✅ done |
-| 13 | Versioning Strategy (SemVer, save schema, feature flags, release tracks) | ✅ done |
-| 14 | Development Roadmap (M0 → M6, ~18 weeks to global launch) | ✅ done |
+### Scripts (executable)
+- `scripts/bootstrap.sh` — first-time contributor setup
+- `scripts/check_layer_deps.py` — enforces layer dependency rules
+- `scripts/check_forbidden.py` — blocks `print()`, `TODO(no-owner)`, absolute paths
+- `scripts/run_tests.sh`, `scripts/build_android.sh`, `scripts/build_web.sh`
 
-## Approval Gate
+### Godot 4 project (`game/`)
+- `project.godot` — 6 autoloads registered in correct boot order, 60 FPS physics, canvas-items stretch
+- `icon.svg` — neon SHIFT // ZERO logo
+- `.gdlintrc` — coding-standards config
 
-Per user instruction, **no gameplay code has been written** and **no engine bootstrap has been performed**.
-Awaiting explicit approval to begin **M0 — Foundation**.
+### Core layer
+- `logger.gd` — 5-level structured logger with ring buffer
+- `config.gd` — build-time config + version reader
+- `result.gd` — `Result<T>` with `Ok`/`Err` branches
+- `rng.gd` — seeded RNG with 5 named streams
+- `time_source.gd` — real / game / wall time domains
+- `events.gd` — central channel + analytics event registry
+- `event_bus.gd` — typed pub/sub
+- `service_locator.gd` — interface → implementation resolver, sealable
 
-## Backlog (post-approval)
+### Services layer (interfaces + implementations)
+- **Save:** `ISaveService` + `InMemorySaveService`
+- **Settings:** `ISettingsService` (accessibility schema) + `InMemorySettingsService`
+- **Ads:** `IAdsService` + `NullAdsService` + `MockAdsService`
+- **Billing:** `IBillingService` + `MockBillingService`
+- **Analytics:** `IAnalyticsService` + `ConsoleAnalyticsService` + `MockAnalyticsService`
+- **Remote Config:** `IRemoteConfigService` + `StaticRemoteConfigService`
+- **Localization:** `ILocalizationService` + `GodotLocalizationService`
+- **Feature Flags:** `IFeatureFlagsService` + `DefaultFeatureFlagsService`
 
-**P0 — M0 Foundation (Week 1)**
-- Bootstrap Godot 4 project at `/app/game/`
-- Set up folder structure per `04_FOLDER_STRUCTURE.md`
-- Autoloads: Logger, Config, ServiceLocator, EventBus, SceneRouter, App
-- Core: Result<T>, seeded RNG, TimeSource, EventBus
-- Mock implementations for all services (SaveService, AdsService, BillingService, etc.)
-- CI: GitHub Actions with lint + unit tests + Android debug build
-- Layer-dependency enforcement script
-- README + quickstart
+### Systems layer
+- **Input:** `IInputRecorder` + `NoopInputRecorder` (Ghost Runs seam, v1.1-ready)
 
-**P1 — M1 Core Loop Prototype (Weeks 2–3)**
+### Gameplay layer
+- `GameplayConfig` — three-layer lookup wrapper for all tunable values
+
+### App / Presentation
+- `app.gd` — top-level bootstrap orchestrator
+- `scene_router.gd` — scene stack
+- `boot.tscn` + `boot.gd` — SHIFT // ZERO splash
+
+### Data
+- `game_config.json` — build-time gameplay defaults
+- `game_version.json` — 0.1.0-m0+dev
+- `feature_flags.json` — 5 flags including `ghost_runs_enabled=false`
+- `remote_config_defaults.json` — full initial key list
+
+### Tests (GUT)
+- `test_result.gd` — 3 tests
+- `test_event_bus.gd` — 4 tests
+- `test_rng.gd` — 3 determinism tests
+- `test_analytics_service.gd` — 3 contract tests
+- `test_remote_config_service.gd` — 3 contract tests
+- `test_settings_service.gd` — 3 accessibility-schema tests
+- `test_gameplay_config.gd` — 3 three-layer-lookup tests
+
+### Documentation (16 docs + 12 ADRs)
+- Docs 00–15 covering executive summary → M0 addenda
+- ADRs 001–012 covering all architectural decisions
+
+## Deferred / Backlog
+
+**P0 — M1 Core Loop Prototype (Weeks 2–3)**
 - PlayerController + gravity flip
-- ObstacleSpawner + 3 patterns
+- ObstacleSpawner with pooling + 3 patterns
 - ScoreSystem + minimal HUD
 - 3 modifiers: Gravity Flip, Low Gravity, Time Slow
-- Local save v1
+- Local save v1 (upgrade `InMemorySaveService` → `FileSystemSaveService`)
 
-**P2 — M2 Vertical Slice (Weeks 4–6)**
+**P1 — M2 Vertical Slice (Weeks 4–6)**
 - Neon art pass on Biome 1
-- 8 modifiers
-- Adaptive audio + haptics
-- Full menu → game → game over loop
-- Settings + localization scaffolding
+- 8 modifiers total
+- Adaptive audio + haptics implementation
+- Full menu → game → game-over loop
+- Settings screen wired to `SettingsService`
+- Localization scaffolding
 
-Further milestones in `/app/docs/14_ROADMAP.md`.
+**P2 — M3 → M6** — content, monetization SDKs (AdMob, Play Billing, Firebase), polish, QA, soft-to-global launch. Details in `/app/docs/14_ROADMAP.md`.
+
+**v1.1** — GPGS integration + Ghost Runs implementation (seams already in place).
 
 ## Next Action Items
 
-1. User reviews `/app/docs/` package.
-2. User replies with approval or revision requests.
-3. On approval, main agent begins M0 (Foundation).
+1. User pulls repo, opens `game/project.godot` in Godot 4.3+, verifies boot screen renders and boot logs stream cleanly.
+2. Verify CI passes on first push (lint + layer_deps + unit tests).
+3. Approve M1 kickoff → main agent implements Core Loop Prototype.
+
+## Notes for the record
+
+- **No gameplay logic exists yet.** Per instructions, M0 delivered scaffolding + architecture only. The boot scene renders the splash; no PlayerController, no ObstacleSpawner, no ModifierManager code.
+- **Godot is NOT installed in this preview environment.** All GDScript code is authored and lint-ready but was not executed here. To validate, open the project locally in Godot 4.3+ and press F5.
+- **No mocked flows are misrepresented as real.** Ads (`NullAdsService`), Billing (`MockBillingService`), Analytics (`ConsoleAnalyticsService`), Remote Config (`StaticRemoteConfigService`) are explicitly the M0 development-tier implementations. Real Firebase / AdMob / Play Billing land in M4.

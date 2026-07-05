@@ -1,0 +1,18 @@
+name: Build Android (debug)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  android_debug:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Note
+        run: |
+          echo "Android export template + signing config is wired in M4."
+          echo "This workflow is a placeholder that will produce a debug AAB using"
+          echo "the checked-in export_presets.cfg once M0 export templates are configured locally."

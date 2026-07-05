@@ -1,0 +1,64 @@
+; SHIFT // ZERO — Godot 4 project file
+; See docs/03_ARCHITECTURE.md and docs/04_FOLDER_STRUCTURE.md
+; Autoload order matters — see docs/04_FOLDER_STRUCTURE.md §3.
+
+config_version=5
+
+[application]
+
+config/name="SHIFT // ZERO"
+config/description="One-finger 2D gravity-shift action. Neon cyberpunk minimalist."
+config/version="0.1.0-m0"
+run/main_scene="res://src/presentation/scenes/boot.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+Logger="*res://src/core/logger.gd"
+Config="*res://src/core/config.gd"
+ServiceLocator="*res://src/core/service_locator.gd"
+EventBus="*res://src/core/event_bus.gd"
+SceneRouter="*res://src/app/scene_router.gd"
+App="*res://src/app/app.gd"
+
+[display]
+
+window/size/viewport_width=1080
+window/size/viewport_height=2400
+window/size/window_width_override=540
+window/size/window_height_override=1200
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=6
+window/subwindows/embed_subwindows=true
+
+[input]
+
+game_tap={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":32,"physical_keycode":0,"key_label":0,"unicode":32,"echo":false,"script":null)
+, Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":1,"canceled":false,"pressed":false,"double_click":false,"script":null)
+, Object(InputEventScreenTouch,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"index":0,"position":Vector2(0, 0),"canceled":false,"pressed":false,"double_tap":false,"script":null)
+]
+}
+game_pause={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194305,"physical_keycode":0,"key_label":0,"unicode":0,"echo":false,"script":null)
+]
+}
+
+[physics]
+
+common/physics_fps=60
+common/physics_jitter_fix=0.0
+2d/default_gravity=980.0
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.web="gl_compatibility"
+2d/snap/snap_2d_transforms_to_pixel=true
+textures/canvas_textures/default_texture_filter=0
+anti_aliasing/quality/msaa_2d=0

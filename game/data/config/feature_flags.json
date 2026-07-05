@@ -1,0 +1,7 @@
+{
+  "flag_modifier_portals_enabled": true,
+  "flag_daily_challenge_enabled": true,
+  "flag_ghost_runs_enabled": false,
+  "flag_gpgs_enabled": false,
+  "flag_debug_overlay_enabled": false
+}

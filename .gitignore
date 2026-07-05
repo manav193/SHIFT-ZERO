@@ -1,0 +1,47 @@
+# Godot 4 project files
+game/.godot/
+game/.import/
+game/export_presets.cfg
+game/*.import
+game/android/build/
+game/android/plugins/
+game/.mono/
+
+# Godot build artifacts
+*.aab
+*.apk
+*.pck
+*.zip
+*.exe
+
+# Web build outputs
+game/platform/web/build/
+game/dist/
+
+# Android keystore (never commit real ones)
+game/platform/android/keystore.env
+*.keystore
+*.jks
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CI artifacts
+coverage/
+perf-reports/
+test-reports/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

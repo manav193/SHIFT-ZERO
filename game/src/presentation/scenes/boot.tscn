@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3 uid="uid://ce0shift0zeroboot0"]
+
+[ext_resource type="Script" path="res://src/presentation/scenes/boot.gd" id="1_boot"]
+
+[node name="Boot" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_boot")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.043, 0.051, 0.102, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="V" type="VBoxContainer" parent="Center"]
+custom_minimum_size = Vector2(600, 0)
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="Title" type="Label" parent="Center/V"]
+text = "SHIFT // ZERO"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 56
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="Sub" type="Label" parent="Center/V"]
+text = "gravity is your only weapon"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
+
+[node name="Status" type="Label" parent="Center/V"]
+text = "booting…"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
