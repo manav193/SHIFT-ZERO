@@ -19,6 +19,7 @@ Logger="*res://src/core/logger.gd"
 Config="*res://src/core/config.gd"
 ServiceLocator="*res://src/core/service_locator.gd"
 EventBus="*res://src/core/event_bus.gd"
+InputSystem="*res://src/systems/input/input_system.gd"
 SceneRouter="*res://src/app/scene_router.gd"
 App="*res://src/app/app.gd"
 
