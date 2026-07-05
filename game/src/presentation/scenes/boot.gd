@@ -6,7 +6,7 @@
 extends Control
 
 const _SPLASH_HOLD_S := 0.6
-const _TEST_CHAMBER_PATH := "res://src/gameplay/test_chamber/test_chamber.tscn"
+const _GAME_WORLD_PATH := "res://src/gameplay/game_world/game_world.tscn"
 
 @onready var _status: Label = $Center/V/Status
 
@@ -21,6 +21,6 @@ func _handoff_after_delay() -> void:
     await get_tree().create_timer(_SPLASH_HOLD_S).timeout
     if not is_inside_tree():
         return
-    var result: Result = SceneRouter.push(_TEST_CHAMBER_PATH)
+    var result: Result = SceneRouter.push(_GAME_WORLD_PATH)
     if not result.ok:
         Logger.error("Boot", "handoff failed: %s" % result.error)

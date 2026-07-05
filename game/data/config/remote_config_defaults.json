@@ -7,6 +7,11 @@
   "gameplay.modifier_default_duration_s": 20.0,
   "gameplay.modifier_min_gap_s": 8.0,
   "gameplay.score_distance_per_point": 4.0,
+  "gameplay.world_chunk_width": 2000.0,
+  "gameplay.world_stream_ahead_chunks": 3,
+  "gameplay.world_stream_behind_chunks": 1,
+  "gameplay.camera_smoothing_speed": 5.0,
+  "gameplay.camera_look_ahead_x": 200.0,
 
   "difficulty.starting_obstacle_density": 0.6,
   "difficulty.speed_ramp_per_10s": 0.04,

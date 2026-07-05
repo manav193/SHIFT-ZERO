@@ -22,6 +22,11 @@ const _HARDCODED_FALLBACK := {
     "modifier_default_duration_s":       20.0,
     "modifier_min_gap_s":                 8.0,
     "score_distance_per_point":           4.0,
+    "world_chunk_width":               2000.0,
+    "world_stream_ahead_chunks":            3,
+    "world_stream_behind_chunks":           1,
+    "camera_smoothing_speed":             5.0,
+    "camera_look_ahead_x":              200.0,
 }
 
 const _BUILD_DEFAULTS_PATH := "res://data/config/game_config.json"

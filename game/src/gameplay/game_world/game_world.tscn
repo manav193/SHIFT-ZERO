@@ -1,0 +1,30 @@
+[gd_scene load_steps=4 format=3 uid="uid://c8szm12gameworld1"]
+
+[ext_resource type="PackedScene" path="res://src/gameplay/player/player.tscn" id="1_player_scene"]
+[ext_resource type="Script" path="res://src/gameplay/world/world_streamer.gd" id="2_streamer_script"]
+[ext_resource type="Script" path="res://src/systems/camera/camera_director.gd" id="3_camera_script"]
+
+[node name="GameWorld" type="Node2D"]
+
+[node name="BgLayer" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Background" type="ColorRect" parent="BgLayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.043, 0.051, 0.102, 1)
+
+[node name="Player" parent="." instance=ExtResource("1_player_scene")]
+position = Vector2(540, 1200)
+
+[node name="WorldStreamer" type="Node2D" parent="."]
+script = ExtResource("2_streamer_script")
+target = NodePath("../Player")
+
+[node name="Camera" type="Camera2D" parent="."]
+script = ExtResource("3_camera_script")
+current = true
+position = Vector2(540, 1200)
+follow_target = NodePath("../Player")
+follow_x = true
+follow_y = false

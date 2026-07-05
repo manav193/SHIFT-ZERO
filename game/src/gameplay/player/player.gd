@@ -34,14 +34,15 @@ var _last_flip_ms: int = -100000
 var _gravity_magnitude: float = 1600.0
 var _terminal_velocity: float = 1800.0
 var _flip_cooldown_ms: int = 80
+var _run_speed: float = 420.0
 
 
 func _ready() -> void:
     _reload_tunables()
     EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
-    Logger.debug("Player", "ready. dir=%d g=%.1f v_term=%.1f cd=%dms" % [
-        _gravity_dir, _gravity_magnitude, _terminal_velocity, _flip_cooldown_ms,
+    Logger.debug("Player", "ready. dir=%d g=%.1f v_term=%.1f cd=%dms run=%.1f" % [
+        _gravity_dir, _gravity_magnitude, _terminal_velocity, _flip_cooldown_ms, _run_speed,
     ])
 
 
@@ -53,7 +54,7 @@ func _exit_tree() -> void:
 func _physics_process(delta: float) -> void:
     velocity.y += float(_gravity_dir) * _gravity_magnitude * delta
     velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
-    velocity.x = 0.0
+    velocity.x = _run_speed
     move_and_slide()
 
 
@@ -90,3 +91,4 @@ func _reload_tunables() -> void:
     _gravity_magnitude = GameplayConfig.get_float("gravity_magnitude")
     _terminal_velocity = GameplayConfig.get_float("terminal_velocity")
     _flip_cooldown_ms = GameplayConfig.get_int("tap_flip_cooldown_ms")
+    _run_speed = GameplayConfig.get_float("player_base_speed")
