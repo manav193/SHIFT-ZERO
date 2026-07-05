@@ -36,9 +36,9 @@ var _terminal_velocity: float = 1800.0
 var _flip_cooldown_ms: int = 80
 var _run_speed: float = 420.0
 
-## True while the run is active. Flipped to false when RUN_FINISHED fires,
-## which freezes physics + input handling.
-var _alive: bool = true
+## True while the run is RUNNING. Toggled by RUN_STARTED and RUN_FINISHED.
+## When false, physics and input taps are frozen.
+var _active: bool = false
 
 
 func _ready() -> void:
@@ -46,6 +46,7 @@ func _ready() -> void:
     add_to_group("player")
     EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+    EventBus.subscribe(Events.RUN_STARTED, _on_run_started)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     Logger.debug("Player", "ready. dir=%d g=%.1f v_term=%.1f cd=%dms run=%.1f" % [
         _gravity_dir, _gravity_magnitude, _terminal_velocity, _flip_cooldown_ms, _run_speed,
@@ -55,11 +56,12 @@ func _ready() -> void:
 func _exit_tree() -> void:
     EventBus.unsubscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+    EventBus.unsubscribe(Events.RUN_STARTED, _on_run_started)
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
 
 
 func _physics_process(delta: float) -> void:
-    if not _alive:
+    if not _active:
         return
     velocity.y += float(_gravity_dir) * _gravity_magnitude * delta
     velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
@@ -85,7 +87,7 @@ func set_gravity_direction(dir: int) -> void:
 
 
 func _on_input_tap(_payload: Dictionary) -> void:
-    if not _alive:
+    if not _active:
         return
     var now := Time.get_ticks_msec()
     if now - _last_flip_ms < _flip_cooldown_ms:
@@ -98,10 +100,15 @@ func _on_remote_config_activated(_payload: Dictionary) -> void:
     _reload_tunables()
 
 
+func _on_run_started(_payload: Dictionary) -> void:
+    _active = true
+    Logger.debug("Player", "activated")
+
+
 func _on_run_finished(payload: Dictionary) -> void:
-    if not _alive:
+    if not _active:
         return
-    _alive = false
+    _active = false
     velocity = Vector2.ZERO
     Logger.info("Player", "run ended: %s" % payload)
 

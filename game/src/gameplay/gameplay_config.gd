@@ -32,6 +32,7 @@ const _HARDCODED_FALLBACK := {
     "obstacle_first_spawn_x":          1500.0,
     "obstacle_spawn_horizon_x":        2500.0,
     "obstacle_despawn_distance_behind": 1500.0,
+    "run_restart_tap_cooldown_ms":       500,
 }
 
 const _BUILD_DEFAULTS_PATH := "res://data/config/game_config.json"
