@@ -7,7 +7,7 @@ extends "res://src/services/ads/i_ads_service.gd"
 
 
 func init(_consent: Dictionary) -> void:
-    Log.info("Ads", "NullAdsService active (no ads on this platform/tier)")
+    print("Ads", "NullAdsService active (no ads on this platform/tier)")
 
 
 func show_rewarded(placement: String) -> Result:

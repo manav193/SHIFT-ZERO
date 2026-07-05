@@ -8,7 +8,7 @@
 ##   if r.ok:
 ##       state = r.value
 ##   else:
-##       Log.warn("Boot", r.error.message)
+##       push_warning("Boot", r.error.message)
 class_name Result
 extends RefCounted
 

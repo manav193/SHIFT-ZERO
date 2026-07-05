@@ -26,7 +26,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier)
     EventBus.subscribe(Events.A11Y_HAPTICS_CHANGED, _on_a11y_haptics_changed)
     EventBus.subscribe(Events.APP_BOOTED, _on_app_booted)
-    Log.info("Haptics", "haptics system ready")
+    print("Haptics", "haptics system ready")
 
 
 func set_enabled(enabled: bool) -> void:

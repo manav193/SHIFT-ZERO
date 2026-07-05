@@ -16,7 +16,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flipped)
     EventBus.subscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
-    Log.info("VFX", "vfx system ready")
+    print("VFX", "vfx system ready")
 
 
 func _on_flipped(payload: Dictionary) -> void:

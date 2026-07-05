@@ -11,7 +11,7 @@ func set_locale(locale: String) -> void:
         TranslationServer.set_locale(OS.get_locale())
     else:
         TranslationServer.set_locale(locale)
-    Log.info("Localization", "locale=%s" % TranslationServer.get_locale())
+    print("Localization", "locale=%s" % TranslationServer.get_locale())
 
 
 func current_locale() -> String:

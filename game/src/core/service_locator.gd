@@ -14,17 +14,17 @@ var _sealed: bool = false
 
 func register(interface_name: String, instance: Object) -> void:
     if _sealed:
-        Log.error("ServiceLocator", "attempted to register '%s' after seal()" % interface_name)
+        push_error("ServiceLocator", "attempted to register '%s' after seal()" % interface_name)
         return
     if _services.has(interface_name):
-        Log.warn("ServiceLocator", "overriding registered '%s'" % interface_name)
+        push_warning("ServiceLocator", "overriding registered '%s'" % interface_name)
     _services[interface_name] = instance
-    Log.debug("ServiceLocator", "registered %s -> %s" % [interface_name, instance.get_class()])
+    print("ServiceLocator", "registered %s -> %s" % [interface_name, instance.get_class()])
 
 
 func get_service(interface_name: String) -> Object:
     if not _services.has(interface_name):
-        Log.error("ServiceLocator", "no service registered for '%s'" % interface_name)
+        push_error("ServiceLocator", "no service registered for '%s'" % interface_name)
         return null
     return _services[interface_name]
 
@@ -35,7 +35,7 @@ func has(interface_name: String) -> bool:
 
 func seal() -> void:
     _sealed = true
-    Log.info("ServiceLocator", "sealed with %d services" % _services.size())
+    print("ServiceLocator", "sealed with %d services" % _services.size())
 
 
 func list_services() -> PackedStringArray:

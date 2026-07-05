@@ -21,7 +21,7 @@ func _ready() -> void:
         "major": 0, "minor": 1, "patch": 0,
         "pre_release": "m0", "build": "dev",
     })
-    Log.info("Config", "version=%s" % version_string())
+    print("Config", "version=%s" % version_string())
 
 
 func get_value(key: String, default: Variant = null) -> Variant:
@@ -43,16 +43,16 @@ func version_code() -> int:
 
 func _load_json(path: String, fallback: Dictionary) -> Dictionary:
     if not FileAccess.file_exists(path):
-        Log.warn("Config", "missing %s, using fallback" % path)
+        push_warning("Config", "missing %s, using fallback" % path)
         return fallback
     var f := FileAccess.open(path, FileAccess.READ)
     if f == null:
-        Log.error("Config", "failed to open %s" % path)
+        push_error("Config", "failed to open %s" % path)
         return fallback
     var text := f.get_as_text()
     f.close()
     var parsed: Variant = JSON.parse_string(text)
     if parsed is Dictionary:
         return parsed
-    Log.warn("Config", "invalid JSON in %s" % path)
+    push_warning("Config", "invalid JSON in %s" % path)
     return fallback

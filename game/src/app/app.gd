@@ -47,7 +47,7 @@ const _GameplayConfig                := preload("res://src/gameplay/gameplay_con
 
 
 func _ready() -> void:
-    Log.info("App", "booting %s" % Config.version_string())
+    print("App", "booting %s" % Config.version_string())
     _register_services()
     _apply_settings()
     _wire_settings_persistence()
@@ -55,7 +55,7 @@ func _ready() -> void:
     _log_boot_analytics()
     ServiceLocator.seal()
     EventBus.emit(Events.APP_BOOTED, {"version": Config.version_string()})
-    Log.info("App", "boot complete")
+    print("App", "boot complete")
 
 
 func _register_services() -> void:

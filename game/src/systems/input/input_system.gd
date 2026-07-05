@@ -12,7 +12,7 @@ const Events := preload("res://src/core/events.gd")
 
 
 func _ready() -> void:
-    Log.info("Input", "input system ready")
+    print("Input", "input system ready")
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -13,7 +13,7 @@ const _GAME_WORLD_PATH := "res://src/gameplay/game_world/game_world.tscn"
 
 func _ready() -> void:
     _status.text = "ready · " + Config.version_string()
-    Log.info("Boot", "splash shown, handing off in %.2fs" % _SPLASH_HOLD_S)
+    print("Boot", "splash shown, handing off in %.2fs" % _SPLASH_HOLD_S)
     _handoff_after_delay()
 
 
@@ -23,4 +23,4 @@ func _handoff_after_delay() -> void:
         return
     var result: Result = SceneRouter.push(_GAME_WORLD_PATH)
     if not result.ok:
-        Log.error("Boot", "handoff failed: %s" % result.error)
+        push_error("Boot", "handoff failed: %s" % result.error)

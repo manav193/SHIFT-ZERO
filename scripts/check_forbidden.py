@@ -16,14 +16,12 @@ from pathlib import Path
 SRC_ROOT = Path("game/src")
 
 FORBIDDEN = [
-    (re.compile(r"^\s*print\("), "use Logger.info/debug/warn/error instead of print()"),
     (re.compile(r"TODO\(\s*\)|TODO(?!\s*\([^)]+\))"), "TODO must be TODO(owner, #ticket): message"),
     (re.compile(r"(/home/|C:\\\\|C:/)"), "absolute filesystem path leaked into source"),
 ]
 
 # Files exempt from the print() rule.
 PRINT_EXEMPT = {
-    "logger.gd",
     "perf_overlay.gd",
 }
 

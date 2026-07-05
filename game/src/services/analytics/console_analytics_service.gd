@@ -1,6 +1,6 @@
 ## ConsoleAnalyticsService
 ##
-## Default M0 implementation — emits structured JSON lines to the Log.
+## Default M0 implementation — emits structured JSON lines to stdout.
 ## Provides real telemetry visibility long before Firebase is wired (M4).
 class_name ConsoleAnalyticsService
 extends "res://src/services/analytics/i_analytics_service.gd"
@@ -11,7 +11,7 @@ var _user_properties: Dictionary = {}
 
 func init(consent: Dictionary) -> void:
     _consent = consent.duplicate()
-    Log.info("Analytics", "console analytics ready. consent=%s" % consent)
+    print("Analytics", "console analytics ready. consent=%s" % consent)
 
 
 func set_user_property(key: String, value: Variant) -> void:
@@ -27,7 +27,7 @@ func log_event(name: String, params: Dictionary = {}) -> void:
         "user_props": _user_properties,
         "t": TimeSource.wall_time_unix(),
     }
-    Log.info("Analytics", JSON.stringify(payload))
+    print("Analytics", JSON.stringify(payload))
 
 
 func flush() -> void:
@@ -36,4 +36,4 @@ func flush() -> void:
 
 func set_consent(consent: Dictionary) -> void:
     _consent = consent.duplicate()
-    Log.info("Analytics", "consent updated: %s" % consent)
+    print("Analytics", "consent updated: %s" % consent)

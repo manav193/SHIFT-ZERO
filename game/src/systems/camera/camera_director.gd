@@ -44,7 +44,7 @@ func _ready() -> void:
     if _target != null:
         _base_position = _target.position
         position = _base_position
-    Log.debug("Camera", "ready. smooth=%.2f look_ahead=%.1f decay=%.2f" % [
+    print("Camera", "ready. smooth=%.2f look_ahead=%.1f decay=%.2f" % [
         _smoothing_speed, _look_ahead_x, _shake_decay,
     ])
 
@@ -103,13 +103,13 @@ func _on_run_finished(_p: Dictionary) -> void:
 
 func _resolve_target() -> void:
     if follow_target.is_empty():
-        Log.warn("Camera", "no follow_target assigned")
+        push_warning("Camera", "no follow_target assigned")
         return
     var n := get_node_or_null(follow_target)
     if n is Node2D:
         _target = n
     else:
-        Log.warn("Camera", "follow_target does not resolve to a Node2D")
+        push_warning("Camera", "follow_target does not resolve to a Node2D")
 
 
 func _reload_tunables() -> void:
