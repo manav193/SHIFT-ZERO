@@ -10,7 +10,7 @@ config/name="SHIFT // ZERO"
 config/description="One-finger 2D gravity-shift action. Neon cyberpunk minimalist."
 config/version="0.1.0-m0"
 run/main_scene="res://src/presentation/scenes/boot.tscn"
-config/features=PackedStringArray("4.3", "GL Compatibility")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
