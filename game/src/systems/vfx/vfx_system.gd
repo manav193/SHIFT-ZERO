@@ -19,6 +19,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.COIN_COLLECTED, _on_coin_collected)
     EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
+    EventBus.subscribe(Events.RUN_LEVEL_CHANGED, _on_run_level_changed)
     print("VFX", "vfx system ready")
 
 
@@ -60,6 +61,13 @@ func _on_powerup_activated(payload: Dictionary) -> void:
     var pos: Variant = payload.get("position", _find_player_position())
     if pos is Vector2:
         _burst(pos, Color(0.0, 0.941, 1.0, 1.0), 36, 420.0, 0.45)
+
+
+func _on_run_level_changed(payload: Dictionary) -> void:
+    var pos: Variant = _find_player_position()
+    if pos is Vector2:
+        var level := int(payload.get("level", 1))
+        _burst(pos, Color(1.0, 0.933, 0.0, 1.0), 10 + level * 4, 260.0, 0.35)
 
 
 func _burst(pos: Vector2, color: Color, amount: int, speed: float, lifetime: float) -> void:

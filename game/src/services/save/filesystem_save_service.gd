@@ -81,6 +81,8 @@ func _default_state() -> Dictionary:
         "stats": {"best_score": 0, "best_distance": 0.0},
         "progression": {
             "total_coins": 0,
+            "player_xp": 0,
+            "player_level": 1,
             "purchased_skins": ["classic_runner"],
             "equipped_skin": "classic_runner",
             "unlocked_cosmetics": [],

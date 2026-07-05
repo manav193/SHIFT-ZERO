@@ -20,6 +20,7 @@ const RUN_FINISHED          := "run/finished"
 const RUN_CONTINUE_GRANTED  := "run/continue_granted"
 const RUN_PAUSED            := "run/paused"
 const RUN_RESUMED           := "run/resumed"
+const RUN_LEVEL_CHANGED     := "run/level_changed"
 
 # ---------- Modifier ----------
 const MODIFIER_ACTIVATED    := "modifier/activated"
@@ -33,6 +34,7 @@ const PLAYER_LANDED          := "player/landed"
 const SCORE_UPDATED         := "score/updated"
 const BEST_SCORE_CHANGED    := "score/best_changed"
 const COIN_COLLECTED        := "score/coin_collected"
+const PLAYER_LEVEL_UP       := "score/player_level_up"
 
 # ---------- Save / entitlements ----------
 const SAVE_PERSISTED        := "save/persisted"

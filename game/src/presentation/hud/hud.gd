@@ -17,6 +17,7 @@
 extends Control
 
 const Events := preload("res://src/core/events.gd")
+const ProgressionRules := preload("res://src/core/progression_rules.gd")
 
 @export var run_director: NodePath
 @export var modifier_manager: NodePath
@@ -25,6 +26,9 @@ const Events := preload("res://src/core/events.gd")
 @onready var _best_label: Label = $Top/Best
 @onready var _distance_label: Label = $Top/Distance
 @onready var _coins_label: Label = $Top/Coins
+@onready var _player_level_label: Label = $Top/PlayerLevel
+@onready var _run_level_label: Label = $Top/RunLevel
+@onready var _run_level_notice: Label = $Top/RunLevelNotice
 @onready var _pause_btn: Button = $Top/PauseBtn
 @onready var _modifier_badge: Control = $Top/ModifierBadge
 @onready var _modifier_label: Label = $Top/ModifierBadge/Label
@@ -40,6 +44,9 @@ const Events := preload("res://src/core/events.gd")
 @onready var _go_best: Label = $GameOverModal/Panel/V/Best
 @onready var _go_distance: Label = $GameOverModal/Panel/V/Distance
 @onready var _go_coins: Label = $GameOverModal/Panel/V/Coins
+@onready var _go_xp: Label = $GameOverModal/Panel/V/XP
+@onready var _go_level: Label = $GameOverModal/Panel/V/Level
+@onready var _go_level_bar: ProgressBar = $GameOverModal/Panel/V/LevelBar
 @onready var _go_restart_btn: Button = $GameOverModal/Panel/V/RestartBtn
 
 var _director: Node
@@ -49,7 +56,11 @@ var _display_score: float = 0.0
 var _target_score: int = 0
 var _flash: ColorRect
 var _run_coins: int = 0
+var _run_powerups: int = 0
 var _total_coins: int = 0
+var _player_xp: int = 0
+var _player_level: int = 1
+var _last_run_level: int = 1
 var _active_powerups: Dictionary = {}
 
 
@@ -59,6 +70,7 @@ func _ready() -> void:
     _pause_modal.visible = false
     _go_modal.visible = false
     _modifier_badge.visible = false
+    _run_level_notice.visible = false
     _pause_btn.pressed.connect(_on_pause_pressed)
     _pause_resume_btn.pressed.connect(_on_resume_pressed)
     _pause_restart_btn.pressed.connect(_on_restart_pressed)
@@ -69,6 +81,7 @@ func _ready() -> void:
     _wire_button(_go_restart_btn)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.COIN_COLLECTED, _on_coin_collected)
+    EventBus.subscribe(Events.POWERUP_COLLECTED, _on_powerup_collected)
     EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
     EventBus.subscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
     EventBus.subscribe(Events.SHIELD_USED, _on_shield_used)
@@ -79,12 +92,15 @@ func _ready() -> void:
     _score_label.text = "0"
     _distance_label.text = "0 m"
     _coins_label.text = "COINS 0"
+    _player_level_label.text = "LV %d" % _player_level
+    _update_run_level(0)
     _make_flash()
 
 
 func _exit_tree() -> void:
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.unsubscribe(Events.COIN_COLLECTED, _on_coin_collected)
+    EventBus.unsubscribe(Events.POWERUP_COLLECTED, _on_powerup_collected)
     EventBus.unsubscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
     EventBus.unsubscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
     EventBus.unsubscribe(Events.SHIELD_USED, _on_shield_used)
@@ -100,7 +116,9 @@ func _process(delta: float) -> void:
     if abs(_display_score - float(_target_score)) < 0.05:
         _display_score = float(_target_score)
     _score_label.text = str(int(round(_display_score)))
-    _distance_label.text = "%d m" % int(_director.current_distance() / 100.0)
+    var distance_m := int(_director.current_distance() / 100.0)
+    _distance_label.text = "%d m" % distance_m
+    _update_run_level(distance_m)
     _update_powerup_badge()
     if _mod_mgr != null and _mod_mgr.has_method("active_id"):
         var id: String = _mod_mgr.active_id()
@@ -136,16 +154,22 @@ func _on_run_finished(_payload: Dictionary) -> void:
     Engine.time_scale = 1.0
     var current: int = 0 if _director == null else _director.current_score()
     var distance: int = 0 if _director == null else int(_director.current_distance())
+    var distance_m := int(distance / 100.0)
     var new_best: bool = current > _best_score
     _persist_run_coins()
+    var xp_earned := ProgressionRules.run_xp(distance_m, _run_coins, _run_powerups, current)
+    var leveled := _persist_run_xp(xp_earned)
     if new_best:
         _best_score = current
         _persist_best_score(_best_score, distance)
     _best_label.text = "BEST %d" % _best_score
     _go_score.text = "SCORE %d" % current
     _go_best.text = "BEST %d%s" % [_best_score, "  NEW!" if new_best else ""]
-    _go_distance.text = "DISTANCE %d m" % int(distance / 100.0)
+    _go_distance.text = "DISTANCE %d m" % distance_m
     _go_coins.text = "COINS +%d  TOTAL %d" % [_run_coins, _total_coins]
+    _go_xp.text = "XP +%d" % xp_earned
+    _go_level.text = "LEVEL %d%s" % [_player_level, "  LEVEL UP!" if leveled else ""]
+    _update_level_bar()
     _go_modal.visible = true
     _animate_modal(_go_panel)
     _go_dim.modulate.a = 0.0
@@ -167,6 +191,10 @@ func _on_modifier_expired(_payload: Dictionary) -> void:
 func _on_coin_collected(payload: Dictionary) -> void:
     _run_coins += int(payload.get("value", 1))
     _coins_label.text = "COINS %d" % _run_coins
+
+
+func _on_powerup_collected(_payload: Dictionary) -> void:
+    _run_powerups += 1
 
 
 func _on_powerup_activated(payload: Dictionary) -> void:
@@ -200,6 +228,8 @@ func _load_saved_progress() -> void:
     var progression: Dictionary = state.get("progression", {})
     _best_score = int(stats.get("best_score", 0))
     _total_coins = int(progression.get("total_coins", 0))
+    _player_xp = int(progression.get("player_xp", 0))
+    _player_level = int(progression.get("player_level", ProgressionRules.level_for_total_xp(_player_xp)))
 
 
 func _persist_best_score(score: int, distance: int) -> void:
@@ -229,6 +259,65 @@ func _persist_run_coins() -> void:
         return state)
     if result.ok:
         _total_coins += _run_coins
+
+
+func _persist_run_xp(xp_earned: int) -> bool:
+    if xp_earned <= 0:
+        return false
+    var old_level := _player_level
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        _player_xp += xp_earned
+        _player_level = ProgressionRules.level_for_total_xp(_player_xp)
+        return _player_level > old_level
+    var result: Result = save.mutate(func(state: Dictionary) -> Dictionary:
+        var progression: Dictionary = state.get("progression", {})
+        var next_xp := int(progression.get("player_xp", 0)) + xp_earned
+        progression["player_xp"] = next_xp
+        progression["player_level"] = ProgressionRules.level_for_total_xp(next_xp)
+        state["progression"] = progression
+        return state)
+    if not result.ok:
+        return false
+    _player_xp += xp_earned
+    _player_level = ProgressionRules.level_for_total_xp(_player_xp)
+    _player_level_label.text = "LV %d" % _player_level
+    var leveled := _player_level > old_level
+    if leveled:
+        EventBus.emit(Events.PLAYER_LEVEL_UP, {"level": _player_level, "xp": _player_xp})
+    return leveled
+
+
+func _update_level_bar() -> void:
+    var need := ProgressionRules.required_xp_for_level(_player_level)
+    var into := ProgressionRules.xp_into_level(_player_xp)
+    _go_level_bar.max_value = need
+    _go_level_bar.value = into
+
+
+func _update_run_level(distance_m: int) -> void:
+    var info := ProgressionRules.run_level_for_distance_m(distance_m)
+    var level := int(info.level)
+    var name := str(info.name)
+    _run_level_label.text = "RUN LV %d  %s" % [level, name.to_upper()]
+    if level != _last_run_level:
+        _last_run_level = level
+        _show_run_level_notice(level, name)
+        EventBus.emit(Events.RUN_LEVEL_CHANGED, {"level": level, "name": name, "distance_m": distance_m})
+
+
+func _show_run_level_notice(level: int, name: String) -> void:
+    _run_level_notice.text = "RUN LEVEL %d  %s" % [level, name.to_upper()]
+    _run_level_notice.visible = true
+    _run_level_notice.modulate.a = 1.0
+    _run_level_notice.scale = Vector2(0.9, 0.9)
+    var tween := create_tween()
+    tween.set_trans(Tween.TRANS_BACK)
+    tween.set_ease(Tween.EASE_OUT)
+    tween.tween_property(_run_level_notice, "scale", Vector2.ONE, 0.18)
+    tween.tween_interval(1.0)
+    tween.tween_property(_run_level_notice, "modulate:a", 0.0, 0.25)
+    tween.tween_callback(func() -> void: _run_level_notice.visible = false)
 
 
 func _update_powerup_badge() -> void:
