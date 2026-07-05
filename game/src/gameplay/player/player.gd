@@ -21,7 +21,7 @@ const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 
 @export var difficulty: NodePath
 
-@onready var _visual: ColorRect = $Visual
+@onready var _model: SkinModel = $SkinModel
 @onready var _trail: Line2D = $Trail
 
 ## +1 -> gravity pulls DOWN. -1 -> gravity pulls UP.
@@ -170,7 +170,7 @@ func _detect_landing() -> void:
         EventBus.emit(Events.PLAYER_LANDED, {
             "position": position,
             "surface": "ceiling" if is_on_ceiling() else "floor",
-            "color": _skin.get("trail", Color(1.0, 0.169, 0.839, 1.0)),
+            "color": _skin.get("land", Color(1.0, 0.169, 0.839, 1.0)),
             "t_ms": Time.get_ticks_msec(),
         })
         _play_land_juice()
@@ -265,15 +265,17 @@ func _load_skin() -> void:
 
 
 func _apply_skin() -> void:
-    _visual.color = _skin.get("player", Color(0.0, 0.941, 1.0, 1.0))
-    _visual.modulate = Color.WHITE
-    _trail.default_color = _skin.get("trail", Color(0.0, 0.941, 1.0, 0.65))
+    _model.apply_skin(_skin)
+    _trail.default_color = _model.trail_color()
+    _trail.width = _model.trail_width()
     _trail.top_level = true
 
 
 func _update_trail() -> void:
-    _trail.add_point(global_position)
-    while _trail.get_point_count() > 14:
+    var points := _model.trail_points(global_position)
+    for p in points:
+        _trail.add_point(p)
+    while _trail.get_point_count() > 28:
         _trail.remove_point(0)
 
 
@@ -289,23 +291,12 @@ func _update_powerup_expiry() -> void:
 
 func _play_flip_juice() -> void:
     _reset_visual_tween()
-    _visual.modulate = Color(1.0, 1.0, 1.0, 1.0)
-    _visual.scale = Vector2(1.22, 0.82)
-    _visual_tween = create_tween()
-    _visual_tween.set_trans(Tween.TRANS_BACK)
-    _visual_tween.set_ease(Tween.EASE_OUT)
-    _visual_tween.tween_property(_visual, "scale", Vector2.ONE, 0.16)
-    _visual_tween.parallel().tween_property(_visual, "modulate", _skin.get("flash", Color(0.0, 0.941, 1.0, 1.0)), 0.08)
-    _visual_tween.tween_property(_visual, "modulate", Color.WHITE, 0.12)
+    _model.play_flip_punch()
 
 
 func _play_land_juice() -> void:
     _reset_visual_tween()
-    _visual.scale = Vector2(1.18, 0.76) if _gravity_dir > 0 else Vector2(1.18, 0.76)
-    _visual_tween = create_tween()
-    _visual_tween.set_trans(Tween.TRANS_ELASTIC)
-    _visual_tween.set_ease(Tween.EASE_OUT)
-    _visual_tween.tween_property(_visual, "scale", Vector2.ONE, 0.22)
+    _model.play_land_squash()
 
 
 func _reset_visual_tween() -> void:

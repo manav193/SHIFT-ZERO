@@ -10,7 +10,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 @onready var _coins_label: Label = $Root/Header/Coins
 @onready var _body: GridContainer = $Root/Body
 @onready var _skin_list: VBoxContainer = $Root/Body/List/Scroll/SkinList
-@onready var _preview_player: ColorRect = $Root/Body/Preview/PreviewBox/Player
+@onready var _preview_player: SkinModel = $Root/Body/Preview/PreviewBox/Player
 @onready var _preview_flash: ColorRect = $Root/Body/Preview/PreviewBox/Flash
 @onready var _preview_trail: Line2D = $Root/Body/Preview/PreviewBox/Trail
 @onready var _preview_name: Label = $Root/Body/Preview/Name
@@ -74,6 +74,8 @@ func _load_progression() -> void:
     if not _purchased.has(SkinCatalog.CLASSIC):
         _purchased.append(SkinCatalog.CLASSIC)
     _equipped = str(progression.get("equipped_skin", SkinCatalog.CLASSIC))
+    if str(SkinCatalog.by_id(_equipped).id) != _equipped:
+        _equipped = SkinCatalog.CLASSIC
     if not _purchased.has(_equipped):
         _equipped = SkinCatalog.CLASSIC
     _coins_label.text = "COINS %d" % _total_coins
@@ -100,8 +102,9 @@ func _select_skin(id: String) -> void:
     _selected = id
     var skin := SkinCatalog.by_id(id)
     _preview_name.text = str(skin.name)
-    _preview_player.color = skin.player
-    _preview_trail.default_color = skin.trail
+    _preview_player.apply_skin(skin)
+    _preview_trail.default_color = _preview_player.trail_color()
+    _preview_trail.width = _preview_player.trail_width()
     _preview_flash.color = skin.flash
     _preview_flash.modulate.a = 0.0
     _preview_state.text = _state_text(skin)
@@ -186,14 +189,19 @@ func _action_text(skin: Dictionary) -> String:
 func _animate_preview(skin: Dictionary) -> void:
     if _preview_tween != null and _preview_tween.is_valid():
         _preview_tween.kill()
-    _preview_player.scale = Vector2(1.25, 0.78)
+    _preview_player.scale = Vector2(1.75, 1.18)
     _preview_flash.modulate.a = 0.8
     _preview_tween = create_tween()
     _preview_tween.set_trans(Tween.TRANS_BACK)
     _preview_tween.set_ease(Tween.EASE_OUT)
-    _preview_tween.tween_property(_preview_player, "scale", Vector2.ONE, 0.18)
+    _preview_tween.tween_property(_preview_player, "scale", Vector2(1.5, 1.5), 0.18)
     _preview_tween.parallel().tween_property(_preview_flash, "modulate:a", 0.0, 0.22)
-    _preview_trail.default_color = skin.trail
+    _preview_trail.points = PackedVector2Array([
+        Vector2(92, 210),
+        Vector2(156, 188),
+        Vector2(238, 200),
+        Vector2(292, 174),
+    ])
 
 
 func _wire_button(button: Button) -> void:

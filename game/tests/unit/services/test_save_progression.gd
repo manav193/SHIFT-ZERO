@@ -37,11 +37,11 @@ func test_skin_purchase_and_equip_persists():
     var save := InMemorySaveService.new()
     save.mutate(func(state: Dictionary) -> Dictionary:
         var progression: Dictionary = state.get("progression", {})
-        progression["total_coins"] = 1000
+        progression["total_coins"] = 2000
         state["progression"] = progression
         return state)
 
-    var selected := "emerald"
+    var selected := "alien"
     var cost := int(SkinCatalog.by_id(selected).cost)
     var result: Result = save.mutate(func(state: Dictionary) -> Dictionary:
         var progression: Dictionary = state.get("progression", {})
@@ -59,4 +59,4 @@ func test_skin_purchase_and_equip_persists():
     var state: Dictionary = loaded.value
     assert_true(state.progression.purchased_skins.has(selected))
     assert_eq(state.progression.equipped_skin, selected)
-    assert_eq(int(state.progression.total_coins), 200)
+    assert_eq(int(state.progression.total_coins), 800)

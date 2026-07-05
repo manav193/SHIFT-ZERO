@@ -10,8 +10,8 @@ var _state: Dictionary = {
     "stats": {},
     "progression": {
         "total_coins": 0,
-        "purchased_skins": ["classic"],
-        "equipped_skin": "classic",
+        "purchased_skins": ["classic_runner"],
+        "equipped_skin": "classic_runner",
         "unlocked_cosmetics": [],
         "equipped_cosmetics": {},
     },
