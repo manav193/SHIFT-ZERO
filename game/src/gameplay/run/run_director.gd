@@ -41,7 +41,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
-    Logger.info("Run", "director ready. state=READY start_x=%.0f" % _start_x)
+    Log.info("Run", "director ready. state=READY start_x=%.0f" % _start_x)
 
 
 func _exit_tree() -> void:
@@ -79,7 +79,7 @@ func _on_input_tap(_payload: Dictionary) -> void:
 
 func _begin_running() -> void:
     _state = State.RUNNING
-    Logger.info("Run", "state=RUNNING")
+    Log.info("Run", "state=RUNNING")
     # Deferred so RUN_STARTED subscribers activate AFTER the current
     # INPUT_TAP iteration completes.
     EventBus.call_deferred("emit", Events.RUN_STARTED, {"t_ms": Time.get_ticks_msec()})
@@ -92,13 +92,13 @@ func _on_run_finished(payload: Dictionary) -> void:
     _game_over_t_ms = Time.get_ticks_msec()
     var distance: float = _current_distance()
     var score: int = int(distance / maxf(0.001, _distance_per_point))
-    Logger.info("Run", "state=GAME_OVER distance=%.0f score=%d cause=%s" % [
+    Log.info("Run", "state=GAME_OVER distance=%.0f score=%d cause=%s" % [
         distance, score, str(payload.get("cause", "?")),
     ])
 
 
 func _restart() -> void:
-    Logger.info("Run", "restart requested -- reloading scene")
+    Log.info("Run", "restart requested -- reloading scene")
     # Reset time_scale in case a modifier left it altered.
     Engine.time_scale = 1.0
     get_tree().reload_current_scene()
@@ -112,7 +112,7 @@ func _current_distance() -> float:
 
 func _resolve_target() -> void:
     if target.is_empty():
-        Logger.warn("Run", "director has no target assigned")
+        Log.warn("Run", "director has no target assigned")
         return
     var n := get_node_or_null(target)
     if n is Node2D:

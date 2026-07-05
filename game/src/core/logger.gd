@@ -1,64 +1,72 @@
 ## Logger
 ##
-## Structured, level-based logger. Autoloaded FIRST so every other autoload
-## can log during its own init.
+## Structured, level-based logger with static state so it can be called from
+## any script scope -- including `class_name` scripts and RefCounted helpers
+## where Godot 4.7's parser resolves the identifier to the class type.
 ##
 ## Levels: TRACE(0) < DEBUG(1) < INFO(2) < WARN(3) < ERROR(4)
 ##
-## Sinks (attached at boot):
+## Sinks:
 ##   - stdout (always)
 ##   - ring buffer in memory (last 500 lines, for crash reports)
 ##
 ## In M4 we attach a Crashlytics sink for ERROR-level messages.
-extends Node
+class_name Log
+extends RefCounted
 
 enum Level { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4 }
 
 const MAX_RING := 500
 
-var _level: int = Level.INFO
-var _ring: Array[String] = []
+static var _level: int = Level.INFO
+static var _ring: Array[String] = []
+static var _initialized: bool = false
 
 
-func _ready() -> void:
+static func _ensure_init() -> void:
+    if _initialized:
+        return
+    _initialized = true
     _level = Level.DEBUG if OS.is_debug_build() else Level.INFO
-    info("Logger", "ready. level=%s build=%s" % [_level_name(_level), _build_tag()])
 
 
-func set_level(level: int) -> void:
+static func set_level(level: int) -> void:
+    _ensure_init()
     _level = clamp(level, Level.TRACE, Level.ERROR)
 
 
-func trace(tag: String, msg: String) -> void:
+static func trace(tag: String, msg: String) -> void:
     _emit(Level.TRACE, tag, msg)
 
 
-func debug(tag: String, msg: String) -> void:
+static func debug(tag: String, msg: String) -> void:
     _emit(Level.DEBUG, tag, msg)
 
 
-func info(tag: String, msg: String) -> void:
+static func info(tag: String, msg: String) -> void:
     _emit(Level.INFO, tag, msg)
 
 
-func warn(tag: String, msg: String) -> void:
+static func warn(tag: String, msg: String) -> void:
     _emit(Level.WARN, tag, msg)
 
 
-func error(tag: String, msg: String) -> void:
+static func error(tag: String, msg: String) -> void:
     _emit(Level.ERROR, tag, msg)
 
 
 ## Returns the last N lines, useful for crash-report bundles.
-func snapshot(n: int = 100) -> Array[String]:
-    var start := maxi(0, _ring.size() - n)
+static func snapshot(n: int = 100) -> Array[String]:
+    _ensure_init()
+    var start: int = maxi(0, _ring.size() - n)
     return _ring.slice(start, _ring.size())
 
 
-func _emit(level: int, tag: String, msg: String) -> void:
+static func _emit(level: int, tag: String, msg: String) -> void:
+    _ensure_init()
     if level < _level:
         return
-    var line := "[%s] %s | %s | %s" % [_level_name(level), _timestamp(), tag, msg]
+    var line: String = "[%s] %s | %s | %s" % [_level_name(level), _timestamp(), tag, msg]
     _ring.append(line)
     if _ring.size() > MAX_RING:
         _ring.pop_front()
@@ -66,7 +74,7 @@ func _emit(level: int, tag: String, msg: String) -> void:
     print(line)
 
 
-func _level_name(level: int) -> String:
+static func _level_name(level: int) -> String:
     match level:
         Level.TRACE: return "TRACE"
         Level.DEBUG: return "DEBUG"
@@ -76,10 +84,6 @@ func _level_name(level: int) -> String:
         _:           return "?"
 
 
-func _timestamp() -> String:
-    var t := Time.get_time_dict_from_system()
+static func _timestamp() -> String:
+    var t: Dictionary = Time.get_time_dict_from_system()
     return "%02d:%02d:%02d" % [t.hour, t.minute, t.second]
-
-
-func _build_tag() -> String:
-    return "debug" if OS.is_debug_build() else "release"

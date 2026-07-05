@@ -62,7 +62,7 @@ func _ready() -> void:
     _resolve_difficulty()
     _next_spawn_x = _first_spawn_x
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
-    Logger.debug("Obstacles", "spawner ready. types=%d spacing=[%.0f,%.0f] first_x=%.0f" % [
+    Log.debug("Obstacles", "spawner ready. types=%d spacing=[%.0f,%.0f] first_x=%.0f" % [
         _types.size(), _spacing_min, _spacing_max, _first_spawn_x,
     ])
 
@@ -168,7 +168,7 @@ func _speed_scale() -> float:
 
 func _load_registry() -> void:
     if not FileAccess.file_exists(_REGISTRY_PATH):
-        Logger.warn("Obstacles", "no registry at %s" % _REGISTRY_PATH)
+        Log.warn("Obstacles", "no registry at %s" % _REGISTRY_PATH)
         return
     var f := FileAccess.open(_REGISTRY_PATH, FileAccess.READ)
     if f == null:
@@ -176,7 +176,7 @@ func _load_registry() -> void:
     var parsed: Variant = JSON.parse_string(f.get_as_text())
     f.close()
     if not (parsed is Dictionary):
-        Logger.warn("Obstacles", "invalid registry format")
+        Log.warn("Obstacles", "invalid registry format")
         return
     var entries: Variant = parsed.get("obstacle_types", [])
     if not (entries is Array):
@@ -186,7 +186,7 @@ func _load_registry() -> void:
             continue
         var scene_path: String = str(item.get("scene", ""))
         if not ResourceLoader.exists(scene_path):
-            Logger.warn("Obstacles", "registry scene missing: %s" % scene_path)
+            Log.warn("Obstacles", "registry scene missing: %s" % scene_path)
             continue
         var scene := load(scene_path) as PackedScene
         if scene == null:
@@ -203,7 +203,7 @@ func _load_registry() -> void:
 
 func _resolve_target() -> void:
     if target.is_empty():
-        Logger.warn("Obstacles", "no target assigned")
+        Log.warn("Obstacles", "no target assigned")
         return
     var n := get_node_or_null(target)
     if n is Node2D:

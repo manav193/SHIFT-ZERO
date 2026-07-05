@@ -41,4 +41,4 @@ func _on_body_entered(body: Node) -> void:
         "obstacle_id": obstacle_id,
         "t_ms": Time.get_ticks_msec(),
     })
-    Logger.info("Obstacle", "hit id=%s" % obstacle_id)
+    Log.info("Obstacle", "hit id=%s" % obstacle_id)

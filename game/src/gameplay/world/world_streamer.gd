@@ -34,7 +34,7 @@ func _ready() -> void:
     _resolve_target()
     if _target != null:
         _refresh_around(_index_of(_target))
-    Logger.debug("World", "streamer ready. chunk_w=%.0f ahead=%d behind=%d" % [
+    Log.debug("World", "streamer ready. chunk_w=%.0f ahead=%d behind=%d" % [
         _chunk_width, _ahead, _behind,
     ])
 
@@ -83,13 +83,13 @@ func _index_of(node: Node2D) -> int:
 
 func _resolve_target() -> void:
     if target.is_empty():
-        Logger.warn("World", "streamer has no target assigned")
+        Log.warn("World", "streamer has no target assigned")
         return
     var n := get_node_or_null(target)
     if n is Node2D:
         _target = n
     else:
-        Logger.warn("World", "streamer target does not resolve to a Node2D")
+        Log.warn("World", "streamer target does not resolve to a Node2D")
 
 
 func _reload_tunables() -> void:

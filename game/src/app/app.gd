@@ -47,7 +47,7 @@ const _GameplayConfig                := preload("res://src/gameplay/gameplay_con
 
 
 func _ready() -> void:
-    Logger.info("App", "booting %s" % Config.version_string())
+    Log.info("App", "booting %s" % Config.version_string())
     _register_services()
     _apply_settings()
     _wire_settings_persistence()
@@ -55,7 +55,7 @@ func _ready() -> void:
     _log_boot_analytics()
     ServiceLocator.seal()
     EventBus.emit(Events.APP_BOOTED, {"version": Config.version_string()})
-    Logger.info("App", "boot complete")
+    Log.info("App", "boot complete")
 
 
 func _register_services() -> void:
@@ -119,7 +119,7 @@ func _apply_settings() -> void:
     loc.set_locale(current.get("locale", "system"))
     for bus_key in ["audio_master", "audio_music", "audio_sfx", "audio_ui"]:
         var value: float = float(current.get(bus_key, 1.0))
-        var bus_name := bus_key.trim_prefix("audio_").capitalize()
+        var bus_name: String = String(bus_key).trim_prefix("audio_").capitalize()
         var idx := AudioServer.get_bus_index(bus_name)
         if idx >= 0:
             AudioServer.set_bus_volume_db(idx, linear_to_db(clampf(value, 0.0, 1.0)))

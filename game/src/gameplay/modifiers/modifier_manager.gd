@@ -55,7 +55,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_PAUSED, _on_run_paused)
     EventBus.subscribe(Events.RUN_RESUMED, _on_run_resumed)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
-    Logger.info("Modifier", "manager ready. pool=%d dur=%.1fs gap=[%.1f,%.1f]s first=%.1fs" % [
+    Log.info("Modifier", "manager ready. pool=%d dur=%.1fs gap=[%.1f,%.1f]s first=%.1fs" % [
         _pool.size(), _duration_s, _min_gap_s, _max_gap_s, _first_delay_s,
     ])
 
@@ -106,7 +106,7 @@ func _activate_random() -> void:
         "duration_s": _duration_s,
         "params": params,
     })
-    Logger.info("Modifier", "activated id=%s duration=%.1fs" % [mod.id(), _duration_s])
+    Log.info("Modifier", "activated id=%s duration=%.1fs" % [mod.id(), _duration_s])
 
 
 func _expire() -> void:
@@ -117,7 +117,7 @@ func _expire() -> void:
     _active.deactivate(params)
     _active = null
     EventBus.emit(Events.MODIFIER_EXPIRED, {"id": id})
-    Logger.info("Modifier", "expired id=%s" % id)
+    Log.info("Modifier", "expired id=%s" % id)
     _schedule_next()
 
 

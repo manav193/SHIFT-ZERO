@@ -50,7 +50,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
-    Logger.debug("Player", "ready. dir=%d g=%.1f v_term=%.1f cd=%dms run=%.1f" % [
+    Log.debug("Player", "ready. dir=%d g=%.1f v_term=%.1f cd=%dms run=%.1f" % [
         _gravity_dir, _gravity_magnitude, _terminal_velocity, _flip_cooldown_ms, _run_speed,
     ])
 
@@ -91,7 +91,7 @@ func set_gravity_direction(dir: int) -> void:
         "position": position,
         "t_ms": Time.get_ticks_msec(),
     })
-    Logger.trace("Player", "gravity flipped -> %d" % _gravity_dir)
+    Log.trace("Player", "gravity flipped -> %d" % _gravity_dir)
 
 
 func speed_multiplier() -> float:
@@ -131,7 +131,7 @@ func _on_run_started(_payload: Dictionary) -> void:
     _active = true
     _gravity_mult = 1.0
     _speed_mult = 1.0
-    Logger.debug("Player", "activated")
+    Log.debug("Player", "activated")
 
 
 func _on_run_finished(payload: Dictionary) -> void:
@@ -139,7 +139,7 @@ func _on_run_finished(payload: Dictionary) -> void:
         return
     _active = false
     velocity = Vector2.ZERO
-    Logger.info("Player", "run ended: %s" % payload)
+    Log.info("Player", "run ended: %s" % payload)
 
 
 func _on_modifier_activated(payload: Dictionary) -> void:

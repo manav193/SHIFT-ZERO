@@ -15,7 +15,6 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Logger="*res://src/core/logger.gd"
 Config="*res://src/core/config.gd"
 ServiceLocator="*res://src/core/service_locator.gd"
 EventBus="*res://src/core/event_bus.gd"

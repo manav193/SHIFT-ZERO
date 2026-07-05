@@ -26,7 +26,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
-    Logger.info("Audio", "audio system ready (%d cues, pool=%d)" % [_streams.size(), _POOL_SIZE])
+    Log.info("Audio", "audio system ready (%d cues, pool=%d)" % [_streams.size(), _POOL_SIZE])
 
 
 func play(cue: String, volume_db: float = 0.0) -> void:

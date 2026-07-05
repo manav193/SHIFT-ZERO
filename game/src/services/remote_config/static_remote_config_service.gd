@@ -15,14 +15,14 @@ var _activated: bool = false
 func init() -> void:
     var f := FileAccess.open(DEFAULTS_PATH, FileAccess.READ)
     if f == null:
-        Logger.warn("RemoteConfig", "no defaults file at %s" % DEFAULTS_PATH)
+        Log.warn("RemoteConfig", "no defaults file at %s" % DEFAULTS_PATH)
         _values = {}
         return
     var text := f.get_as_text()
     f.close()
     var parsed: Variant = JSON.parse_string(text)
     _values = parsed if parsed is Dictionary else {}
-    Logger.info("RemoteConfig", "loaded %d default keys" % _values.size())
+    Log.info("RemoteConfig", "loaded %d default keys" % _values.size())
 
 
 func fetch_and_activate(_timeout_s: float = 1.0) -> Result:
