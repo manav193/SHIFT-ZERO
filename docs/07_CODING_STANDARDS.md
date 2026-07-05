@@ -86,7 +86,7 @@ These are enforceable rules. CI fails on violations. When a rule conflicts with 
 
 - Public methods on Services return `Result<T>`. No exceptions across layers.
 - `assert(...)` for invariants that must hold in dev; strip in release via a `dev_only` macro pattern.
-- Never silently swallow errors — log via `Logger.warn/error`.
+- Never silently swallow errors — report via `push_warning`/`push_error`.
 
 ### 2.9 Nulls
 

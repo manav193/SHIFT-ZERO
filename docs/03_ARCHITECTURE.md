@@ -215,7 +215,7 @@ For replay + tests + fair Daily Challenges:
 ## 9. Error Handling Policy
 
 - Services return `Result<T>` — callers must handle both branches. `unwrap()` is banned outside tests.
-- Unrecoverable errors → route through `Logger.error(...)` → Crashlytics; UI shows a friendly toast; game state is snapshotted to `emergency_save.json`.
+- Unrecoverable errors → route through `push_error(...)` → Crashlytics; UI shows a friendly toast; game state is snapshotted to `emergency_save.json`.
 - Gameplay-level errors (impossible state) → `assert` in debug builds, safe fallback + telemetry in release.
 
 ## 10. Extensibility Hooks
