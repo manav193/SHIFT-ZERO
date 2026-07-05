@@ -27,6 +27,11 @@ const _HARDCODED_FALLBACK := {
     "world_stream_behind_chunks":           1,
     "camera_smoothing_speed":             5.0,
     "camera_look_ahead_x":              200.0,
+    "obstacle_spacing_min":             800.0,
+    "obstacle_spacing_max":            1400.0,
+    "obstacle_first_spawn_x":          1500.0,
+    "obstacle_spawn_horizon_x":        2500.0,
+    "obstacle_despawn_distance_behind": 1500.0,
 }
 
 const _BUILD_DEFAULTS_PATH := "res://data/config/game_config.json"

@@ -12,6 +12,11 @@
   "gameplay.world_stream_behind_chunks": 1,
   "gameplay.camera_smoothing_speed": 5.0,
   "gameplay.camera_look_ahead_x": 200.0,
+  "gameplay.obstacle_spacing_min": 800.0,
+  "gameplay.obstacle_spacing_max": 1400.0,
+  "gameplay.obstacle_first_spawn_x": 1500.0,
+  "gameplay.obstacle_spawn_horizon_x": 2500.0,
+  "gameplay.obstacle_despawn_distance_behind": 1500.0,
 
   "difficulty.starting_obstacle_density": 0.6,
   "difficulty.speed_ramp_per_10s": 0.04,

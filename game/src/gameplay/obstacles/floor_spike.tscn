@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8szm13floorspk1"]
+
+[ext_resource type="Script" path="res://src/gameplay/obstacles/obstacle.gd" id="1_obstacle_script"]
+
+[sub_resource type="RectangleShape2D" id="FloorSpikeShape_m13"]
+size = Vector2(120, 120)
+
+[node name="FloorSpike" type="Area2D"]
+position = Vector2(0, 2200)
+script = ExtResource("1_obstacle_script")
+obstacle_id = "floor_spike"
+
+[node name="Visual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-60, 60, 60, 60, 0, -60)
+color = Color(1, 0.271, 0.325, 1)
+
+[node name="Collider" type="CollisionShape2D" parent="."]
+shape = SubResource("FloorSpikeShape_m13")
