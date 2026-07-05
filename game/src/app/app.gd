@@ -6,7 +6,7 @@
 ##   3. Kick a non-blocking Remote Config fetch.
 ##   4. Attach GameplayConfig to the Remote Config service.
 ##   5. Wire settings persistence (SETTINGS_CHANGED -> save.mutate).
-##   6. Log app_start analytics event.
+##   6. Record app_start analytics event.
 ##   7. Emit APP_BOOTED on the EventBus.
 ##
 ## Autoloaded LAST so all core singletons above it are ready.

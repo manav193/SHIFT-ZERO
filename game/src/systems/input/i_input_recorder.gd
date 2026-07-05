@@ -4,7 +4,7 @@
 ## Implementation deferred to v1.1. The no-op default keeps every
 ## call site compilable and testable today.
 ##
-## Log format spec: docs/decisions/ADR-012-ghost-run-format.md (draft).
+## Recording format spec: docs/decisions/ADR-012-ghost-run-format.md (draft).
 class_name IInputRecorder
 extends RefCounted
 
