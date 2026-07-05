@@ -44,3 +44,34 @@ func test_flip_keeps_larger_raw_gap():
     s._last_safe_side = "ceiling"
     var g := s._apply_fair_min_gap({"safe_side": "floor"}, 1600.0)
     assert_almost_eq(g, 1600.0, 0.001)
+
+
+func test_min_spawn_x_blocks_late_obstacles_early():
+    var s := _make()
+    s._last_safe_side = "either"
+    var fair := s._is_fair({"safe_side": "either", "min_spawn_x": 4500.0}, 2000.0)
+    assert_false(fair)
+
+
+func test_min_spawn_x_allows_late_obstacles_after_gate():
+    var s := _make()
+    s._last_safe_side = "either"
+    var fair := s._is_fair({"safe_side": "either", "min_spawn_x": 4500.0}, 5000.0)
+    assert_true(fair)
+
+
+func test_scale_ramps_with_spawn_distance():
+    var s := _make()
+    s._rng = RandomNumberGenerator.new()
+    s._rng.seed = 7
+    s._difficulty_scale_distance = 10000.0
+    var type := {
+        "scale_min": Vector2(1.0, 1.0),
+        "scale_max": Vector2(1.8, 1.4),
+    }
+    var early := s._scale_for(type, 0.0)
+    assert_almost_eq(early.x, 1.0, 0.001)
+    assert_almost_eq(early.y, 1.0, 0.001)
+    var late := s._scale_for(type, 10000.0)
+    assert_between(late.x, 1.0, 1.8)
+    assert_between(late.y, 1.0, 1.4)

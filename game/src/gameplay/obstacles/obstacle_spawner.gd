@@ -37,7 +37,7 @@ const _REGISTRY_PATH := "res://data/obstacles/registry.json"
 
 var _target: Node2D
 var _difficulty: Node
-var _types: Array = []          # Array<{id, scene, weight, safe_side}>
+var _types: Array = []          # Array<{id, scene, weight, safe_side, min_spawn_x, scale_min, scale_max}>
 var _total_weight: float = 0.0
 var _spawned: Array[Node2D] = []
 var _next_spawn_x: float = 0.0
@@ -51,6 +51,7 @@ var _despawn_behind: float = 1500.0
 var _base_speed: float = 420.0
 var _fair_min_flip_time_s: float = 0.55
 var _fair_min_flip_gap: float = 1000.0
+var _difficulty_scale_distance: float = 10000.0
 var _rng: RandomNumberGenerator
 var _spawning_enabled: bool = true
 
@@ -86,7 +87,7 @@ func _spawn_while_needed(px: float) -> void:
         _spawning_enabled = false
         return
     while _next_spawn_x < px + _spawn_horizon_ahead:
-        var picked: Dictionary = _pick_type_fair()
+        var picked: Dictionary = _pick_type_fair(_next_spawn_x)
         if picked.is_empty():
             _spawning_enabled = false
             return
@@ -126,27 +127,30 @@ func _spawn_at(x: float, type: Dictionary) -> void:
     var scene: PackedScene = type["scene"]
     var obs := scene.instantiate() as Node2D
     obs.position.x = x
+    obs.scale = _scale_for(type, x)
     add_child(obs)
     _spawned.append(obs)
 
 
-func _pick_type_fair() -> Dictionary:
+func _pick_type_fair(spawn_x: float = 0.0) -> Dictionary:
     if _types.is_empty():
         return {}
     # Try up to 4 draws; if we keep landing on obstacles that would require
     # an impossible tight-flip, fall back to an "either" or same-side type.
     for _i in 4:
         var candidate: Dictionary = _pick_weighted()
-        if _is_fair(candidate):
+        if _is_fair(candidate, spawn_x):
             return candidate
     # Fallback: search deterministically for a compatible type.
     for t in _types:
-        if _is_fair(t):
+        if _is_fair(t, spawn_x):
             return t
-    return _types[0]
+    return {}
 
 
-func _is_fair(t: Dictionary) -> bool:
+func _is_fair(t: Dictionary, spawn_x: float = 0.0) -> bool:
+    if spawn_x < float(t.get("min_spawn_x", 0.0)):
+        return false
     var side: String = str(t.get("safe_side", "either"))
     if _last_safe_side == "either" or side == "either":
         return true
@@ -208,6 +212,9 @@ func _load_registry() -> void:
             "scene": scene,
             "weight": weight,
             "safe_side": str(item.get("safe_side", "either")),
+            "min_spawn_x": float(item.get("min_spawn_x", 0.0)),
+            "scale_min": _vector2_from_json(item.get("scale_min", [1.0, 1.0]), Vector2.ONE),
+            "scale_max": _vector2_from_json(item.get("scale_max", [1.0, 1.0]), Vector2.ONE),
         })
         _total_weight += weight
 
@@ -238,7 +245,25 @@ func _reload_tunables() -> void:
     _base_speed = GameplayConfig.get_float("player_base_speed")
     _fair_min_flip_time_s = GameplayConfig.get_float("fair_min_flip_time_s")
     _fair_min_flip_gap = GameplayConfig.get_float("fair_min_flip_gap")
+    _difficulty_scale_distance = GameplayConfig.get_float("obstacle_difficulty_scale_distance")
 
 
 func _on_remote_config_activated(_payload: Dictionary) -> void:
     _reload_tunables()
+
+
+func _scale_for(type: Dictionary, spawn_x: float) -> Vector2:
+    var min_scale: Vector2 = type.get("scale_min", Vector2.ONE)
+    var max_scale: Vector2 = type.get("scale_max", Vector2.ONE)
+    var ramp: float = clampf(spawn_x / maxf(1.0, _difficulty_scale_distance), 0.0, 1.0)
+    var target := min_scale.lerp(max_scale, ramp)
+    return Vector2(
+        _rng.randf_range(min_scale.x, target.x),
+        _rng.randf_range(min_scale.y, target.y)
+    )
+
+
+func _vector2_from_json(value: Variant, fallback: Vector2) -> Vector2:
+    if value is Array and value.size() >= 2:
+        return Vector2(float(value[0]), float(value[1]))
+    return fallback

@@ -1,0 +1,54 @@
+[gd_scene load_steps=2 format=3 uid="uid://shift0mainmenu0"]
+
+[ext_resource type="Script" path="res://src/presentation/scenes/main_menu.gd" id="1_main_menu"]
+
+[node name="MainMenu" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main_menu")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.043, 0.051, 0.102, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="V" type="VBoxContainer" parent="Center"]
+custom_minimum_size = Vector2(620, 0)
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="Title" type="Label" parent="Center/V"]
+text = "SHIFT // ZERO"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 64
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="Sub" type="Label" parent="Center/V"]
+text = "gravity is your only weapon"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
+
+[node name="Spacer" type="Control" parent="Center/V"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="PlayBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 120)
+text = "PLAY"
+theme_override_font_sizes/font_size = 42
+
+[node name="SettingsBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 120)
+text = "SETTINGS"
+theme_override_font_sizes/font_size = 42
+
+[node name="QuitBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 120)
+text = "QUIT"
+theme_override_font_sizes/font_size = 42

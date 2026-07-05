@@ -4,19 +4,34 @@
       "id": "floor_spike",
       "scene": "res://src/gameplay/obstacles/floor_spike.tscn",
       "weight": 1.0,
-      "safe_side": "ceiling"
+      "safe_side": "ceiling",
+      "scale_min": [0.85, 0.85],
+      "scale_max": [1.45, 1.35]
     },
     {
       "id": "ceiling_spike",
       "scene": "res://src/gameplay/obstacles/ceiling_spike.tscn",
       "weight": 1.0,
-      "safe_side": "floor"
+      "safe_side": "floor",
+      "scale_min": [0.85, 0.85],
+      "scale_max": [1.45, 1.35]
     },
     {
       "id": "static_block",
       "scene": "res://src/gameplay/obstacles/static_block.tscn",
       "weight": 0.5,
-      "safe_side": "either"
+      "safe_side": "either",
+      "scale_min": [0.8, 0.7],
+      "scale_max": [1.35, 1.25]
+    },
+    {
+      "id": "flying_bird",
+      "scene": "res://src/gameplay/obstacles/flying_bird.tscn",
+      "weight": 0.75,
+      "safe_side": "either",
+      "min_spawn_x": 4500.0,
+      "scale_min": [0.85, 0.85],
+      "scale_max": [1.25, 1.2]
     }
   ]
 }

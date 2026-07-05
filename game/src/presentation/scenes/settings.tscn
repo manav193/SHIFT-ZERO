@@ -1,0 +1,68 @@
+[gd_scene load_steps=2 format=3 uid="uid://shift0settings0"]
+
+[ext_resource type="Script" path="res://src/presentation/scenes/settings.gd" id="1_settings"]
+
+[node name="Settings" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.043, 0.051, 0.102, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="V" type="VBoxContainer" parent="Center"]
+custom_minimum_size = Vector2(720, 0)
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="Title" type="Label" parent="Center/V"]
+text = "SETTINGS"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 60
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="MasterRow" type="HBoxContainer" parent="Center/V"]
+custom_minimum_size = Vector2(0, 96)
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="MasterLabel" type="Label" parent="Center/V/MasterRow"]
+custom_minimum_size = Vector2(190, 0)
+text = "MASTER"
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.75, 0.85, 0.9, 1)
+
+[node name="MasterSlider" type="HSlider" parent="Center/V/MasterRow"]
+custom_minimum_size = Vector2(360, 0)
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="MasterValue" type="Label" parent="Center/V/MasterRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
+
+[node name="HapticsToggle" type="CheckButton" parent="Center/V"]
+custom_minimum_size = Vector2(0, 110)
+text = "HAPTICS"
+button_pressed = true
+theme_override_font_sizes/font_size = 38
+
+[node name="BackBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 120)
+text = "BACK"
+theme_override_font_sizes/font_size = 42

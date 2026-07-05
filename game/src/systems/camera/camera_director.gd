@@ -24,6 +24,7 @@ var _look_ahead_x: float = 200.0
 var _shake_decay: float = 1.4
 var _shake_max_offset: float = 80.0
 var _impact_trauma: float = 0.65
+var _design_view_height: float = 2400.0
 
 # Trauma is 0..1; visible shake = trauma^2 for a punchy feel.
 var _trauma: float = 0.0
@@ -67,6 +68,7 @@ func _process(delta: float) -> void:
     var t: float = 1.0 - exp(-_smoothing_speed * delta)
     _base_position = _base_position.lerp(desired, t)
     _update_shake(delta)
+    _update_responsive_zoom()
     position = _base_position + _shake_offset
 
 
@@ -120,7 +122,16 @@ func _reload_tunables() -> void:
         _shake_decay = rc.get_float("gameplay.camera_shake_decay_per_s", 1.4)
         _shake_max_offset = rc.get_float("gameplay.camera_shake_max_offset_px", 80.0)
         _impact_trauma = rc.get_float("gameplay.camera_impact_trauma", 0.65)
+        _design_view_height = rc.get_float("gameplay.camera_design_view_height", 2400.0)
 
 
 func _on_remote_config_activated(_payload: Dictionary) -> void:
     _reload_tunables()
+
+
+func _update_responsive_zoom() -> void:
+    var viewport_height := float(get_viewport_rect().size.y)
+    if viewport_height <= 0.0:
+        return
+    var target_zoom := clampf(viewport_height / _design_view_height, 0.45, 1.0)
+    zoom = Vector2(target_zoom, target_zoom)
