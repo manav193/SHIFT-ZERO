@@ -15,6 +15,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 @onready var _preview_trail: Line2D = $Root/Body/Preview/PreviewBox/Trail
 @onready var _preview_name: Label = $Root/Body/Preview/Name
 @onready var _preview_state: Label = $Root/Body/Preview/State
+@onready var _preview_effects: Label = $Root/Body/Preview/Effects
 @onready var _action_btn: Button = $Root/Body/Preview/ActionBtn
 
 var _total_coins: int = 0
@@ -108,6 +109,7 @@ func _select_skin(id: String) -> void:
     _preview_flash.color = skin.flash
     _preview_flash.modulate.a = 0.0
     _preview_state.text = _state_text(skin)
+    _preview_effects.text = _effects_text(skin)
     _action_btn.text = _action_text(skin)
     _action_btn.disabled = not _is_owned(id) and _total_coins < int(skin.cost)
     _animate_preview(skin)
@@ -186,6 +188,15 @@ func _action_text(skin: Dictionary) -> String:
     return "PURCHASE"
 
 
+func _effects_text(skin: Dictionary) -> String:
+    return "TRAIL %s  /  FLIP %d  /  LAND %d  /  DEATH %d" % [
+        str(skin.get("trail_style", "dash")).to_upper(),
+        int(skin.get("flip_amount", 0)),
+        int(skin.get("land_amount", 0)),
+        int(skin.get("death_amount", 0)),
+    ]
+
+
 func _animate_preview(skin: Dictionary) -> void:
     if _preview_tween != null and _preview_tween.is_valid():
         _preview_tween.kill()
@@ -196,12 +207,7 @@ func _animate_preview(skin: Dictionary) -> void:
     _preview_tween.set_ease(Tween.EASE_OUT)
     _preview_tween.tween_property(_preview_player, "scale", Vector2(1.5, 1.5), 0.18)
     _preview_tween.parallel().tween_property(_preview_flash, "modulate:a", 0.0, 0.22)
-    _preview_trail.points = PackedVector2Array([
-        Vector2(92, 210),
-        Vector2(156, 188),
-        Vector2(238, 200),
-        Vector2(292, 174),
-    ])
+    _preview_trail.points = _preview_player.trail_points(Vector2(250, 205))
 
 
 func _wire_button(button: Button) -> void:

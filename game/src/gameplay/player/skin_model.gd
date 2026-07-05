@@ -40,8 +40,9 @@ func _process(delta: float) -> void:
             _body.rotation = sin(_phase * 8.0) * 0.06
         "shimmer":
             _body.scale = Vector2(1.0 + sin(_phase * 5.0) * 0.04, 1.0 - sin(_phase * 5.0) * 0.03)
-        "wing":
+        "wing", "flap":
             _body.position.y = sin(_phase * 4.8) * 4.0
+            _body.scale = Vector2(1.0 + sin(_phase * 7.0) * 0.08, 1.0)
         "pulse":
             _body.scale = Vector2.ONE * (1.0 + sin(_phase * 4.0) * 0.06)
 
@@ -77,6 +78,8 @@ func apply_skin(skin: Dictionary) -> void:
             _build_dragon()
         "core":
             _build_core()
+        "phoenix":
+            _build_phoenix()
         _:
             _build_runner()
 
@@ -213,6 +216,15 @@ func _build_core() -> void:
     _line([Vector2(-58, 0), Vector2(-38, 0), Vector2(-22, -22)], _c("accent"), 4.0)
     _line([Vector2(58, 0), Vector2(38, 0), Vector2(22, 22)], _c("accent"), 4.0)
     _line([Vector2(0, -58), Vector2(0, -46)], _c("accent"), 4.0)
+
+
+func _build_phoenix() -> void:
+    _poly([Vector2(0, -48), Vector2(20, -10), Vector2(10, 40), Vector2(0, 56), Vector2(-10, 40), Vector2(-20, -10)], _c("player"))
+    _poly([Vector2(-12, -6), Vector2(-70, -34), Vector2(-48, 8), Vector2(-76, 34), Vector2(-20, 24)], _c("accent"))
+    _poly([Vector2(12, -6), Vector2(70, -34), Vector2(48, 8), Vector2(76, 34), Vector2(20, 24)], _c("accent"))
+    _poly([Vector2(0, -58), Vector2(12, -42), Vector2(0, -48), Vector2(-12, -42)], Color(1.0, 0.9, 0.18, 1.0))
+    _line([Vector2(-6, 44), Vector2(-24, 76)], _c("accent"), 5.0)
+    _line([Vector2(6, 44), Vector2(24, 76)], _c("accent"), 5.0)
 
 
 func _poly(points: Array[Vector2], color: Color) -> Polygon2D:
