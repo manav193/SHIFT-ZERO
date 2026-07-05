@@ -1,4 +1,4 @@
-## Logger
+## Log
 ##
 ## Structured, level-based logger with static state so it can be called from
 ## any script scope -- including `class_name` scripts and RefCounted helpers
