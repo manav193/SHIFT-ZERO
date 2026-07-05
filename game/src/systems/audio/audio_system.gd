@@ -1,8 +1,8 @@
 ## AudioSystem
 ##
-## Minimal autoload that turns gameplay events into short SFX.
-## Streams are procedurally generated at boot (no asset files shipped) —
-## sine bursts for flip / start, decaying sweep for death.
+## Autoload that turns gameplay events into short SFX. Streams are procedurally
+## generated at boot (no asset files shipped) -- sine bursts for flip / land /
+## modifier / start, decaying sweep for death.
 ##
 ## Design: pooled AudioStreamPlayers to allow overlapping cues without
 ## popping. Adding real .ogg cues later = swap `_streams["<cue>"]`.
@@ -10,7 +10,7 @@ extends Node
 
 const Events := preload("res://src/core/events.gd")
 
-const _POOL_SIZE := 6
+const _POOL_SIZE := 8
 
 var _players: Array[AudioStreamPlayer] = []
 var _next_idx: int = 0
@@ -21,8 +21,11 @@ func _ready() -> void:
     _generate_streams()
     _create_pool()
     EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flip)
+    EventBus.subscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.subscribe(Events.RUN_STARTED, _on_run_started)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
+    EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
+    EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
     Logger.info("Audio", "audio system ready (%d cues, pool=%d)" % [_streams.size(), _POOL_SIZE])
 
 
@@ -40,12 +43,24 @@ func _on_flip(_p: Dictionary) -> void:
     play("flip", -6.0)
 
 
+func _on_landed(_p: Dictionary) -> void:
+    play("land", -10.0)
+
+
 func _on_run_started(_p: Dictionary) -> void:
     play("start", -3.0)
 
 
 func _on_run_finished(_p: Dictionary) -> void:
     play("death", 0.0)
+
+
+func _on_modifier_activated(_p: Dictionary) -> void:
+    play("mod_on", -4.0)
+
+
+func _on_modifier_expired(_p: Dictionary) -> void:
+    play("mod_off", -6.0)
 
 
 func _create_pool() -> void:
@@ -57,8 +72,11 @@ func _create_pool() -> void:
 
 func _generate_streams() -> void:
     _streams["flip"] = _sine(880.0, 0.08)
+    _streams["land"] = _sine(320.0, 0.10)
     _streams["start"] = _sine(660.0, 0.18)
     _streams["death"] = _sweep(220.0, 55.0, 0.55)
+    _streams["mod_on"] = _sweep(440.0, 990.0, 0.22)
+    _streams["mod_off"] = _sweep(720.0, 240.0, 0.20)
 
 
 func _sine(freq: float, dur: float) -> AudioStreamWAV:

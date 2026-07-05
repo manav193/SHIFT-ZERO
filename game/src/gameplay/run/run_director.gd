@@ -5,11 +5,12 @@
 ##   RUNNING   -> RUN_FINISHED (from Obstacle) -> GAME_OVER
 ##   GAME_OVER -> INPUT_TAP (after cooldown) -> reload scene
 ##
-## Distance and final score are computed at end-of-run only:
-##   score = floor(distance / score_distance_per_point)
+## Score & distance:
+##   distance = max(0, target.x - start_x)
+##   score    = floor(distance / score_distance_per_point)
+##   Both exposed live via current_score() / current_distance().
 ##
-## Restart uses `get_tree().reload_current_scene()` — a clean scene reset;
-## every node (Player, WorldStreamer, ObstacleSpawner) is a fresh instance.
+## Restart uses `get_tree().reload_current_scene()` -- a clean scene reset.
 ##
 ## Layer: gameplay.
 class_name RunDirector
@@ -49,9 +50,21 @@ func _exit_tree() -> void:
     EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
 
 
-## Read-only view of current state — exposed for tests + future subsystems.
+## Read-only view of current state -- exposed for tests + HUD.
 func state() -> int:
     return _state
+
+
+func is_running() -> bool:
+    return _state == State.RUNNING
+
+
+func current_distance() -> float:
+    return _current_distance()
+
+
+func current_score() -> int:
+    return int(_current_distance() / maxf(0.001, _distance_per_point))
 
 
 func _on_input_tap(_payload: Dictionary) -> void:
@@ -68,8 +81,7 @@ func _begin_running() -> void:
     _state = State.RUNNING
     Logger.info("Run", "state=RUNNING")
     # Deferred so RUN_STARTED subscribers activate AFTER the current
-    # INPUT_TAP iteration completes — prevents the same tap from being
-    # consumed twice (once to start, once to flip gravity).
+    # INPUT_TAP iteration completes.
     EventBus.call_deferred("emit", Events.RUN_STARTED, {"t_ms": Time.get_ticks_msec()})
 
 
@@ -86,7 +98,9 @@ func _on_run_finished(payload: Dictionary) -> void:
 
 
 func _restart() -> void:
-    Logger.info("Run", "restart requested — reloading scene")
+    Logger.info("Run", "restart requested -- reloading scene")
+    # Reset time_scale in case a modifier left it altered.
+    Engine.time_scale = 1.0
     get_tree().reload_current_scene()
 
 

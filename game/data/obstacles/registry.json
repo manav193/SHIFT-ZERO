@@ -1,7 +1,22 @@
 {
   "obstacle_types": [
-    { "id": "static_block",  "scene": "res://src/gameplay/obstacles/static_block.tscn",  "weight": 1.0 },
-    { "id": "ceiling_spike", "scene": "res://src/gameplay/obstacles/ceiling_spike.tscn", "weight": 1.0 },
-    { "id": "floor_spike",   "scene": "res://src/gameplay/obstacles/floor_spike.tscn",   "weight": 1.0 }
+    {
+      "id": "floor_spike",
+      "scene": "res://src/gameplay/obstacles/floor_spike.tscn",
+      "weight": 1.0,
+      "safe_side": "ceiling"
+    },
+    {
+      "id": "ceiling_spike",
+      "scene": "res://src/gameplay/obstacles/ceiling_spike.tscn",
+      "weight": 1.0,
+      "safe_side": "floor"
+    },
+    {
+      "id": "static_block",
+      "scene": "res://src/gameplay/obstacles/static_block.tscn",
+      "weight": 0.5,
+      "safe_side": "either"
+    }
   ]
 }

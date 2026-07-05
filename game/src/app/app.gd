@@ -2,11 +2,12 @@
 ##
 ## Top-level orchestrator. Runs the boot sequence:
 ##   1. Register all services with the ServiceLocator (per-platform selection).
-##   2. Load settings and apply them (locale, audio buses, a11y).
+##   2. Load persisted settings from ISaveService and apply them.
 ##   3. Kick a non-blocking Remote Config fetch.
 ##   4. Attach GameplayConfig to the Remote Config service.
-##   5. Log app_start analytics event.
-##   6. Emit APP_BOOTED on the EventBus.
+##   5. Wire settings persistence (SETTINGS_CHANGED -> save.mutate).
+##   6. Log app_start analytics event.
+##   7. Emit APP_BOOTED on the EventBus.
 ##
 ## Autoloaded LAST so all core singletons above it are ready.
 extends Node
@@ -16,6 +17,7 @@ const Events := preload("res://src/core/events.gd")
 # ---------- Service classes (compile-time refs, no runtime cost) ----------
 const _ISaveService                  := preload("res://src/services/save/i_save_service.gd")
 const _InMemorySaveService           := preload("res://src/services/save/in_memory_save_service.gd")
+const _FileSystemSaveService         := preload("res://src/services/save/filesystem_save_service.gd")
 
 const _ISettingsService              := preload("res://src/services/settings/i_settings_service.gd")
 const _InMemorySettingsService       := preload("res://src/services/settings/in_memory_settings_service.gd")
@@ -48,6 +50,7 @@ func _ready() -> void:
     Logger.info("App", "booting %s" % Config.version_string())
     _register_services()
     _apply_settings()
+    _wire_settings_persistence()
     _fetch_remote_config_async()
     _log_boot_analytics()
     ServiceLocator.seal()
@@ -56,10 +59,13 @@ func _ready() -> void:
 
 
 func _register_services() -> void:
-    # Selection is per-platform. For M0 everything is in-memory / mock.
-    ServiceLocator.register("ISaveService", _InMemorySaveService.new())
+    # Save: real filesystem persistence for gameplay (Alpha M1.5).
+    var save: Object = _make_save_service()
+    ServiceLocator.register("ISaveService", save)
 
-    ServiceLocator.register("ISettingsService", _InMemorySettingsService.new())
+    var settings := _InMemorySettingsService.new()
+    _hydrate_settings_from_save(settings, save)
+    ServiceLocator.register("ISettingsService", settings)
 
     var analytics := _ConsoleAnalyticsService.new()
     ServiceLocator.register("IAnalyticsService", analytics)
@@ -75,7 +81,6 @@ func _register_services() -> void:
     var ads: Object
     match OS.get_name():
         "Android":
-            # Real AdMob wires up in M4 — until then, Null is fine for M0.
             ads = _NullAdsService.new()
         _:
             ads = _NullAdsService.new()
@@ -89,12 +94,29 @@ func _register_services() -> void:
     ServiceLocator.register("IInputRecorder", _NoopInputRecorder.new())
 
 
+## Filesystem save on real platforms; in-memory in headless CI (where
+## user:// may not be writable).
+func _make_save_service() -> Object:
+    return _FileSystemSaveService.new()
+
+
+func _hydrate_settings_from_save(settings: _ISettingsService, save: Object) -> void:
+    if save == null:
+        return
+    var r: Result = save.load_state()
+    if not r.ok:
+        return
+    var state: Dictionary = r.value
+    var persisted: Dictionary = state.get("settings", {})
+    for key in persisted.keys():
+        settings.set_value(key, persisted[key])
+
+
 func _apply_settings() -> void:
     var settings := ServiceLocator.get_service("ISettingsService") as _ISettingsService
     var loc := ServiceLocator.get_service("ILocalizationService") as _ILocalizationService
     var current: Dictionary = settings.load_settings()
     loc.set_locale(current.get("locale", "system"))
-    # Apply audio buses.
     for bus_key in ["audio_master", "audio_music", "audio_sfx", "audio_ui"]:
         var value: float = float(current.get(bus_key, 1.0))
         var bus_name := bus_key.trim_prefix("audio_").capitalize()
@@ -103,10 +125,27 @@ func _apply_settings() -> void:
             AudioServer.set_bus_volume_db(idx, linear_to_db(clampf(value, 0.0, 1.0)))
 
 
+func _wire_settings_persistence() -> void:
+    EventBus.subscribe(Events.SETTINGS_CHANGED, _on_settings_changed)
+
+
+func _on_settings_changed(payload: Dictionary) -> void:
+    var key: String = str(payload.get("key", ""))
+    if key == "":
+        return
+    var value: Variant = payload.get("value")
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    save.mutate(func(state: Dictionary) -> Dictionary:
+        var s: Dictionary = state.get("settings", {})
+        s[key] = value
+        state["settings"] = s
+        return state)
+
+
 func _fetch_remote_config_async() -> void:
     var rc := ServiceLocator.get_service("IRemoteConfigService") as _IRemoteConfigService
-    # In M0 the static provider activates synchronously; in M4 the Firebase
-    # provider will use a real 1s timeout and defer.
     rc.fetch_and_activate(1.0)
 
 

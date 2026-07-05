@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://c8szm12gameworld1"]
+[gd_scene load_steps=9 format=3 uid="uid://c8szm12gameworld1"]
 
 [ext_resource type="PackedScene" path="res://src/gameplay/player/player.tscn" id="1_player_scene"]
 [ext_resource type="Script" path="res://src/gameplay/world/world_streamer.gd" id="2_streamer_script"]
 [ext_resource type="Script" path="res://src/systems/camera/camera_director.gd" id="3_camera_script"]
 [ext_resource type="Script" path="res://src/gameplay/obstacles/obstacle_spawner.gd" id="4_obstacle_spawner_script"]
 [ext_resource type="Script" path="res://src/gameplay/run/run_director.gd" id="5_run_director_script"]
+[ext_resource type="Script" path="res://src/gameplay/difficulty/difficulty_director.gd" id="6_difficulty_script"]
+[ext_resource type="Script" path="res://src/gameplay/modifiers/modifier_manager.gd" id="7_modifier_manager_script"]
+[ext_resource type="PackedScene" path="res://src/presentation/hud/hud.tscn" id="8_hud_scene"]
 
 [node name="GameWorld" type="Node2D"]
 
@@ -23,13 +26,22 @@ position = Vector2(540, 1200)
 script = ExtResource("2_streamer_script")
 target = NodePath("../Player")
 
+[node name="DifficultyDirector" type="Node" parent="."]
+script = ExtResource("6_difficulty_script")
+
 [node name="ObstacleSpawner" type="Node2D" parent="."]
 script = ExtResource("4_obstacle_spawner_script")
 target = NodePath("../Player")
+difficulty = NodePath("../DifficultyDirector")
+
+[node name="ModifierManager" type="Node" parent="."]
+script = ExtResource("7_modifier_manager_script")
 
 [node name="RunDirector" type="Node" parent="."]
 script = ExtResource("5_run_director_script")
 target = NodePath("../Player")
+
+[node name="VfxRoot" type="Node2D" parent="."]
 
 [node name="Camera" type="Camera2D" parent="."]
 script = ExtResource("3_camera_script")
@@ -38,3 +50,10 @@ position = Vector2(540, 1200)
 follow_target = NodePath("../Player")
 follow_x = true
 follow_y = false
+
+[node name="HudLayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="HUD" parent="HudLayer" instance=ExtResource("8_hud_scene")]
+run_director = NodePath("../../RunDirector")
+modifier_manager = NodePath("../../ModifierManager")

@@ -27,6 +27,7 @@ const MODIFIER_EXPIRED      := "modifier/expired"
 
 # ---------- Player ----------
 const PLAYER_GRAVITY_FLIPPED := "player/gravity_flipped"
+const PLAYER_LANDED          := "player/landed"
 
 # ---------- Score ----------
 const SCORE_UPDATED         := "score/updated"
