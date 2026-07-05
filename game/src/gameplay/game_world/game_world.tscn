@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://c8szm12gameworld1"]
+[gd_scene load_steps=11 format=3 uid="uid://c8szm12gameworld1"]
 
 [ext_resource type="PackedScene" path="res://src/gameplay/player/player.tscn" id="1_player_scene"]
 [ext_resource type="Script" path="res://src/gameplay/world/world_streamer.gd" id="2_streamer_script"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://src/gameplay/modifiers/modifier_manager.gd" id="7_modifier_manager_script"]
 [ext_resource type="PackedScene" path="res://src/presentation/hud/hud.tscn" id="8_hud_scene"]
 [ext_resource type="Script" path="res://src/gameplay/world/parallax_background.gd" id="9_parallax_script"]
+[ext_resource type="Script" path="res://src/gameplay/collectibles/collectible_spawner.gd" id="10_collectible_spawner_script"]
 
 [node name="GameWorld" type="Node2D"]
 
@@ -39,6 +40,10 @@ script = ExtResource("6_difficulty_script")
 script = ExtResource("4_obstacle_spawner_script")
 target = NodePath("../Player")
 difficulty = NodePath("../DifficultyDirector")
+
+[node name="CollectibleSpawner" type="Node2D" parent="."]
+script = ExtResource("10_collectible_spawner_script")
+target = NodePath("../Player")
 
 [node name="ModifierManager" type="Node" parent="."]
 script = ExtResource("7_modifier_manager_script")

@@ -79,7 +79,7 @@ func _default_state() -> Dictionary:
     return {
         "schema_version": 1,
         "stats": {"best_score": 0, "best_distance": 0.0},
-        "progression": {"unlocked_cosmetics": [], "equipped_cosmetics": {}},
+        "progression": {"total_coins": 0, "unlocked_cosmetics": [], "equipped_cosmetics": {}},
         "entitlements": {"remove_ads": false, "owned_bundles": []},
         "consent": {"analytics": false, "personalized_ads": false, "crashlytics": false},
         "flags": {},

@@ -39,6 +39,11 @@ var _run_speed: float = 420.0
 # Runtime modifier multipliers. 1.0 = no effect.
 var _gravity_mult: float = 1.0
 var _speed_mult: float = 1.0
+var _shield_charges: int = 0
+var _magnet_until_ms: int = 0
+var _double_score_until_ms: int = 0
+var _magnet_announced_expired: bool = true
+var _double_score_announced_expired: bool = true
 
 ## True while the run is RUNNING. Toggled by RUN_STARTED and RUN_FINISHED.
 var _active: bool = false
@@ -74,6 +79,7 @@ func _exit_tree() -> void:
 func _physics_process(delta: float) -> void:
     if not _active:
         return
+    _update_powerup_expiry()
     velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * delta
     velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
     velocity.x = _run_speed * speed_multiplier()
@@ -110,6 +116,47 @@ func gravity_multiplier() -> float:
     return _gravity_mult
 
 
+func apply_powerup(id: String, duration_s: float) -> void:
+    var now := Time.get_ticks_msec()
+    match id:
+        "shield":
+            _shield_charges = max(_shield_charges, 1)
+        "magnet":
+            _magnet_until_ms = now + int(duration_s * 1000.0)
+            _magnet_announced_expired = false
+        "double_score":
+            _double_score_until_ms = now + int(duration_s * 1000.0)
+            _double_score_announced_expired = false
+        _:
+            push_warning("Player", "unknown powerup: %s" % id)
+            return
+    EventBus.emit(Events.POWERUP_ACTIVATED, {
+        "id": id,
+        "duration_s": duration_s,
+        "position": position,
+        "t_ms": now,
+    })
+
+
+func consume_shield() -> bool:
+    if _shield_charges <= 0:
+        return false
+    _shield_charges -= 1
+    EventBus.emit(Events.SHIELD_USED, {
+        "position": position,
+        "t_ms": Time.get_ticks_msec(),
+    })
+    return true
+
+
+func magnet_active() -> bool:
+    return Time.get_ticks_msec() < _magnet_until_ms
+
+
+func double_score_active() -> bool:
+    return Time.get_ticks_msec() < _double_score_until_ms
+
+
 func _detect_landing() -> void:
     var on_surface: bool = is_on_floor() or is_on_ceiling()
     if on_surface and not _was_on_surface:
@@ -140,6 +187,11 @@ func _on_run_started(_payload: Dictionary) -> void:
     _active = true
     _gravity_mult = 1.0
     _speed_mult = 1.0
+    _shield_charges = 0
+    _magnet_until_ms = 0
+    _double_score_until_ms = 0
+    _magnet_announced_expired = true
+    _double_score_announced_expired = true
     print("Player", "activated")
 
 
@@ -189,6 +241,16 @@ func _difficulty_speed_multiplier() -> float:
     if _difficulty == null or not _difficulty.has_method("speed_multiplier"):
         return 1.0
     return float(_difficulty.speed_multiplier())
+
+
+func _update_powerup_expiry() -> void:
+    var now := Time.get_ticks_msec()
+    if not _magnet_announced_expired and now >= _magnet_until_ms:
+        _magnet_announced_expired = true
+        EventBus.emit(Events.POWERUP_EXPIRED, {"id": "magnet", "t_ms": now})
+    if not _double_score_announced_expired and now >= _double_score_until_ms:
+        _double_score_announced_expired = true
+        EventBus.emit(Events.POWERUP_EXPIRED, {"id": "double_score", "t_ms": now})
 
 
 func _play_flip_juice() -> void:

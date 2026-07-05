@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://shift0coin0001"]
+
+[ext_resource type="Script" path="res://src/gameplay/collectibles/coin.gd" id="1_coin_script"]
+
+[sub_resource type="CircleShape2D" id="CoinShape"]
+radius = 34.0
+
+[node name="Coin" type="Area2D"]
+script = ExtResource("1_coin_script")
+
+[node name="Glow" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -46, 32, -32, 46, 0, 32, 32, 0, 46, -32, 32, -46, 0, -32, -32)
+color = Color(1.0, 0.933, 0.0, 0.28)
+
+[node name="Face" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -30, 21, -21, 30, 0, 21, 21, 0, 30, -21, 21, -30, 0, -21, -21)
+color = Color(1.0, 0.84, 0.0, 1.0)
+
+[node name="Collider" type="CollisionShape2D" parent="."]
+shape = SubResource("CoinShape")

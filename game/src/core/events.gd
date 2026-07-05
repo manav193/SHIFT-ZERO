@@ -32,10 +32,17 @@ const PLAYER_LANDED          := "player/landed"
 # ---------- Score ----------
 const SCORE_UPDATED         := "score/updated"
 const BEST_SCORE_CHANGED    := "score/best_changed"
+const COIN_COLLECTED        := "score/coin_collected"
 
 # ---------- Save / entitlements ----------
 const SAVE_PERSISTED        := "save/persisted"
 const ENTITLEMENTS_CHANGED  := "entitlements/changed"
+
+# ---------- Collectibles / powerups ----------
+const POWERUP_COLLECTED     := "powerup/collected"
+const POWERUP_ACTIVATED     := "powerup/activated"
+const POWERUP_EXPIRED       := "powerup/expired"
+const SHIELD_USED           := "powerup/shield_used"
 
 # ---------- Settings / a11y ----------
 const SETTINGS_CHANGED      := "settings/changed"

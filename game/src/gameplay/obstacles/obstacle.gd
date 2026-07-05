@@ -60,6 +60,10 @@ func _on_body_entered(body: Node) -> void:
         return
     _triggered = true
     monitoring = false
+    if body.has_method("consume_shield") and body.consume_shield():
+        print("Obstacle", "shield blocked id=%s" % obstacle_id)
+        queue_free()
+        return
     EventBus.emit(Events.RUN_FINISHED, {
         "cause": "obstacle",
         "obstacle_id": obstacle_id,

@@ -24,6 +24,7 @@ const Events := preload("res://src/core/events.gd")
 @onready var _score_label: Label = $Top/Score
 @onready var _best_label: Label = $Top/Best
 @onready var _distance_label: Label = $Top/Distance
+@onready var _coins_label: Label = $Top/Coins
 @onready var _pause_btn: Button = $Top/PauseBtn
 @onready var _modifier_badge: Control = $Top/ModifierBadge
 @onready var _modifier_label: Label = $Top/ModifierBadge/Label
@@ -38,6 +39,7 @@ const Events := preload("res://src/core/events.gd")
 @onready var _go_score: Label = $GameOverModal/Panel/V/Score
 @onready var _go_best: Label = $GameOverModal/Panel/V/Best
 @onready var _go_distance: Label = $GameOverModal/Panel/V/Distance
+@onready var _go_coins: Label = $GameOverModal/Panel/V/Coins
 @onready var _go_restart_btn: Button = $GameOverModal/Panel/V/RestartBtn
 
 var _director: Node
@@ -46,6 +48,9 @@ var _best_score: int = 0
 var _display_score: float = 0.0
 var _target_score: int = 0
 var _flash: ColorRect
+var _run_coins: int = 0
+var _total_coins: int = 0
+var _active_powerups: Dictionary = {}
 
 
 func _ready() -> void:
@@ -63,17 +68,26 @@ func _ready() -> void:
     _wire_button(_pause_restart_btn)
     _wire_button(_go_restart_btn)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
+    EventBus.subscribe(Events.COIN_COLLECTED, _on_coin_collected)
+    EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
+    EventBus.subscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
+    EventBus.subscribe(Events.SHIELD_USED, _on_shield_used)
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
-    _load_best_score()
+    _load_saved_progress()
     _best_label.text = "BEST %d" % _best_score
     _score_label.text = "0"
     _distance_label.text = "0 m"
+    _coins_label.text = "COINS 0"
     _make_flash()
 
 
 func _exit_tree() -> void:
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
+    EventBus.unsubscribe(Events.COIN_COLLECTED, _on_coin_collected)
+    EventBus.unsubscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
+    EventBus.unsubscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
+    EventBus.unsubscribe(Events.SHIELD_USED, _on_shield_used)
     EventBus.unsubscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.unsubscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
 
@@ -87,6 +101,7 @@ func _process(delta: float) -> void:
         _display_score = float(_target_score)
     _score_label.text = str(int(round(_display_score)))
     _distance_label.text = "%d m" % int(_director.current_distance() / 100.0)
+    _update_powerup_badge()
     if _mod_mgr != null and _mod_mgr.has_method("active_id"):
         var id: String = _mod_mgr.active_id()
         if id != "" and _modifier_badge.visible:
@@ -122,6 +137,7 @@ func _on_run_finished(_payload: Dictionary) -> void:
     var current: int = 0 if _director == null else _director.current_score()
     var distance: int = 0 if _director == null else int(_director.current_distance())
     var new_best: bool = current > _best_score
+    _persist_run_coins()
     if new_best:
         _best_score = current
         _persist_best_score(_best_score, distance)
@@ -129,6 +145,7 @@ func _on_run_finished(_payload: Dictionary) -> void:
     _go_score.text = "SCORE %d" % current
     _go_best.text = "BEST %d%s" % [_best_score, "  NEW!" if new_best else ""]
     _go_distance.text = "DISTANCE %d m" % int(distance / 100.0)
+    _go_coins.text = "COINS +%d  TOTAL %d" % [_run_coins, _total_coins]
     _go_modal.visible = true
     _animate_modal(_go_panel)
     _go_dim.modulate.a = 0.0
@@ -147,7 +164,31 @@ func _on_modifier_expired(_payload: Dictionary) -> void:
     _modifier_badge.visible = false
 
 
-func _load_best_score() -> void:
+func _on_coin_collected(payload: Dictionary) -> void:
+    _run_coins += int(payload.get("value", 1))
+    _coins_label.text = "COINS %d" % _run_coins
+
+
+func _on_powerup_activated(payload: Dictionary) -> void:
+    var id := str(payload.get("id", ""))
+    var duration_s := float(payload.get("duration_s", 0.0))
+    if id == "":
+        return
+    _active_powerups[id] = Time.get_ticks_msec() + int(duration_s * 1000.0)
+    _update_powerup_badge()
+
+
+func _on_powerup_expired(payload: Dictionary) -> void:
+    _active_powerups.erase(str(payload.get("id", "")))
+    _update_powerup_badge()
+
+
+func _on_shield_used(_payload: Dictionary) -> void:
+    _active_powerups.erase("shield")
+    _update_powerup_badge()
+
+
+func _load_saved_progress() -> void:
     var save: Object = ServiceLocator.get_service("ISaveService")
     if save == null:
         return
@@ -156,7 +197,9 @@ func _load_best_score() -> void:
         return
     var state: Dictionary = r.value
     var stats: Dictionary = state.get("stats", {})
+    var progression: Dictionary = state.get("progression", {})
     _best_score = int(stats.get("best_score", 0))
+    _total_coins = int(progression.get("total_coins", 0))
 
 
 func _persist_best_score(score: int, distance: int) -> void:
@@ -170,6 +213,45 @@ func _persist_best_score(score: int, distance: int) -> void:
         state["stats"] = stats
         return state)
     EventBus.emit(Events.BEST_SCORE_CHANGED, {"best_score": score})
+
+
+func _persist_run_coins() -> void:
+    if _run_coins <= 0:
+        return
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        _total_coins += _run_coins
+        return
+    var result: Result = save.mutate(func(state: Dictionary) -> Dictionary:
+        var progression: Dictionary = state.get("progression", {})
+        progression["total_coins"] = int(progression.get("total_coins", 0)) + _run_coins
+        state["progression"] = progression
+        return state)
+    if result.ok:
+        _total_coins += _run_coins
+
+
+func _update_powerup_badge() -> void:
+    if _modifier_badge.visible and _mod_mgr != null and _mod_mgr.has_method("active_id") and _mod_mgr.active_id() != "":
+        return
+    var now := Time.get_ticks_msec()
+    for id in _active_powerups.keys():
+        if id != "shield" and now >= int(_active_powerups[id]):
+            _active_powerups.erase(id)
+    if _active_powerups.has("shield"):
+        _modifier_label.text = "SHIELD"
+        _modifier_time.text = "READY"
+        _modifier_badge.visible = true
+        return
+    for id in ["magnet", "double_score"]:
+        if _active_powerups.has(id):
+            _modifier_label.text = "MAGNET" if id == "magnet" else "2X SCORE"
+            var remaining := maxf(0.0, float(int(_active_powerups[id]) - now) / 1000.0)
+            _modifier_time.text = "%.1fs" % remaining
+            _modifier_badge.visible = true
+            return
+    if _mod_mgr == null or not _mod_mgr.has_method("active_id") or _mod_mgr.active_id() == "":
+        _modifier_badge.visible = false
 
 
 func _make_flash() -> void:

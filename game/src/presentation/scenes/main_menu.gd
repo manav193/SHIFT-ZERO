@@ -9,6 +9,7 @@ const _SETTINGS_PATH := "res://src/presentation/scenes/settings.tscn"
 @onready var _play_btn: Button = $Center/V/PlayBtn
 @onready var _settings_btn: Button = $Center/V/SettingsBtn
 @onready var _quit_btn: Button = $Center/V/QuitBtn
+@onready var _coins_label: Label = $Center/V/Coins
 
 
 func _ready() -> void:
@@ -18,6 +19,7 @@ func _ready() -> void:
     _wire_button(_play_btn)
     _wire_button(_settings_btn)
     _wire_button(_quit_btn)
+    _coins_label.text = "TOTAL COINS %d" % _load_total_coins()
 
 
 func _on_play_pressed() -> void:
@@ -48,3 +50,15 @@ func _button_to(button: Button, target_scale: Vector2, duration: float) -> void:
     tween.set_trans(Tween.TRANS_QUAD)
     tween.set_ease(Tween.EASE_OUT)
     tween.tween_property(button, "scale", target_scale, duration)
+
+
+func _load_total_coins() -> int:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return 0
+    var result: Result = save.load_state()
+    if not result.ok:
+        return 0
+    var state: Dictionary = result.value
+    var progression: Dictionary = state.get("progression", {})
+    return int(progression.get("total_coins", 0))

@@ -38,6 +38,12 @@ theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
 [node name="Spacer" type="Control" parent="Center/V"]
 custom_minimum_size = Vector2(0, 32)
 
+[node name="Coins" type="Label" parent="Center/V"]
+text = "TOTAL COINS 0"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1, 0.933, 0, 1)
+
 [node name="PlayBtn" type="Button" parent="Center/V"]
 custom_minimum_size = Vector2(0, 120)
 text = "PLAY"

@@ -26,6 +26,8 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
+    EventBus.subscribe(Events.COIN_COLLECTED, _on_coin_collected)
+    EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
     print("Audio", "audio system ready (%d cues, pool=%d)" % [_streams.size(), _POOL_SIZE])
 
 
@@ -63,6 +65,14 @@ func _on_modifier_expired(_p: Dictionary) -> void:
     play("mod_off", -6.0)
 
 
+func _on_coin_collected(_p: Dictionary) -> void:
+    play("coin", -8.0)
+
+
+func _on_powerup_activated(_p: Dictionary) -> void:
+    play("powerup", -4.0)
+
+
 func _create_pool() -> void:
     for i in _POOL_SIZE:
         var p := AudioStreamPlayer.new()
@@ -77,6 +87,8 @@ func _generate_streams() -> void:
     _streams["death"] = _sweep(220.0, 55.0, 0.55)
     _streams["mod_on"] = _sweep(440.0, 990.0, 0.22)
     _streams["mod_off"] = _sweep(720.0, 240.0, 0.20)
+    _streams["coin"] = _sine(1320.0, 0.06)
+    _streams["powerup"] = _sweep(520.0, 1180.0, 0.28)
 
 
 func _sine(freq: float, dur: float) -> AudioStreamWAV:

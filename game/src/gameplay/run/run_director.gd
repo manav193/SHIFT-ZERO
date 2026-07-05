@@ -31,6 +31,9 @@ var _game_over_t_ms: int = 0
 
 var _distance_per_point: float = 4.0
 var _restart_cooldown_ms: int = 500
+var _score_bonus: int = 0
+var _double_score_active: bool = false
+var _double_score_start_distance: float = 0.0
 
 
 func _ready() -> void:
@@ -41,6 +44,8 @@ func _ready() -> void:
     EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+    EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
+    EventBus.subscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
     print("Run", "director ready. state=READY start_x=%.0f" % _start_x)
 
 
@@ -48,6 +53,8 @@ func _exit_tree() -> void:
     EventBus.unsubscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+    EventBus.unsubscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
+    EventBus.unsubscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
 
 
 ## Read-only view of current state -- exposed for tests + HUD.
@@ -64,7 +71,7 @@ func current_distance() -> float:
 
 
 func current_score() -> int:
-    return int(_current_distance() / maxf(0.001, _distance_per_point))
+    return _base_score() + _score_bonus + _active_double_score_bonus()
 
 
 func _on_input_tap(_payload: Dictionary) -> void:
@@ -79,6 +86,9 @@ func _on_input_tap(_payload: Dictionary) -> void:
 
 func _begin_running() -> void:
     _state = State.RUNNING
+    _score_bonus = 0
+    _double_score_active = false
+    _double_score_start_distance = _current_distance()
     print("Run", "state=RUNNING")
     # Deferred so RUN_STARTED subscribers activate AFTER the current
     # INPUT_TAP iteration completes.
@@ -91,7 +101,8 @@ func _on_run_finished(payload: Dictionary) -> void:
     _state = State.GAME_OVER
     _game_over_t_ms = Time.get_ticks_msec()
     var distance: float = _current_distance()
-    var score: int = int(distance / maxf(0.001, _distance_per_point))
+    _bank_double_score_bonus()
+    var score: int = current_score()
     print("Run", "state=GAME_OVER distance=%.0f score=%d cause=%s" % [
         distance, score, str(payload.get("cause", "?")),
     ])
@@ -110,6 +121,25 @@ func _current_distance() -> float:
     return maxf(0.0, _target.position.x - _start_x)
 
 
+func _base_score() -> int:
+    return int(_current_distance() / maxf(0.001, _distance_per_point))
+
+
+func _active_double_score_bonus() -> int:
+    if not _double_score_active:
+        return 0
+    var bonus_distance := maxf(0.0, _current_distance() - _double_score_start_distance)
+    return int(bonus_distance / maxf(0.001, _distance_per_point))
+
+
+func _bank_double_score_bonus() -> void:
+    if not _double_score_active:
+        return
+    _score_bonus += _active_double_score_bonus()
+    _double_score_active = false
+    _double_score_start_distance = _current_distance()
+
+
 func _resolve_target() -> void:
     if target.is_empty():
         push_warning("Run", "director has no target assigned")
@@ -126,3 +156,16 @@ func _reload_tunables() -> void:
 
 func _on_remote_config_activated(_payload: Dictionary) -> void:
     _reload_tunables()
+
+
+func _on_powerup_activated(payload: Dictionary) -> void:
+    if _state != State.RUNNING or str(payload.get("id", "")) != "double_score":
+        return
+    _bank_double_score_bonus()
+    _double_score_active = true
+    _double_score_start_distance = _current_distance()
+
+
+func _on_powerup_expired(payload: Dictionary) -> void:
+    if str(payload.get("id", "")) == "double_score":
+        _bank_double_score_bonus()

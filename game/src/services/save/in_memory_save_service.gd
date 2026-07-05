@@ -8,7 +8,7 @@ var _state: Dictionary = {
     "schema_version": 1,
     "player_id": "",
     "stats": {},
-    "progression": {"unlocked_cosmetics": [], "equipped_cosmetics": {}},
+    "progression": {"total_coins": 0, "unlocked_cosmetics": [], "equipped_cosmetics": {}},
     "entitlements": {"remove_ads": false, "owned_bundles": []},
     "consent": {"analytics": false, "personalized_ads": false, "crashlytics": false},
     "flags": {},

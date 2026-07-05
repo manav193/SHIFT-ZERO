@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://shift0powerup1"]
+
+[ext_resource type="Script" path="res://src/gameplay/collectibles/powerup.gd" id="1_powerup_script"]
+
+[sub_resource type="CircleShape2D" id="PowerupShape"]
+radius = 44.0
+
+[node name="Powerup" type="Area2D"]
+script = ExtResource("1_powerup_script")
+
+[node name="Outer" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -52, 45, -26, 45, 26, 0, 52, -45, 26, -45, -26)
+color = Color(0.0, 0.941, 1.0, 0.35)
+
+[node name="Inner" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -34, 29, -17, 29, 17, 0, 34, -29, 17, -29, -17)
+color = Color(1.0, 0.169, 0.839, 1.0)
+
+[node name="Collider" type="CollisionShape2D" parent="."]
+shape = SubResource("PowerupShape")
