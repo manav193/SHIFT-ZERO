@@ -42,27 +42,26 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Cache Godot binary
         id: godot-cache
         uses: actions/cache@v4
         with:
           path: ~/godot
-          key: godot-4.3-linux
-      - name: Download Godot 4.3
+          key: godot-4.7-linux
+      - name: Download Godot 4.7
         if: steps.godot-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/godot
-          curl -L -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          curl -L -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
           unzip /tmp/godot.zip -d ~/godot
-          chmod +x ~/godot/Godot_v4.3-stable_linux.x86_64
+          chmod +x ~/godot/Godot_v4.7-stable_linux.x86_64
       - name: Import project (headless)
-        run: ~/godot/Godot_v4.3-stable_linux.x86_64 --headless --path game --editor --quit || true
+        run: ~/godot/Godot_v4.7-stable_linux.x86_64 --headless --path game --editor --quit || true
       - name: Run GUT
-        run: |
-          ~/godot/Godot_v4.3-stable_linux.x86_64 \
-            --headless --path game \
-            -s addons/gut/gut_cmdln.gd \
-            -gdir=res://tests/unit -gexit || exit 1
+        run: GODOT_BIN=~/godot/Godot_v4.7-stable_linux.x86_64 bash ./scripts/run_tests.sh
 
   perf_smoke:
     name: Perf smoke (headless)

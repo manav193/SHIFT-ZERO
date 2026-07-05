@@ -3,7 +3,7 @@
 ## Core movement system for SHIFT // ZERO.
 ##
 ## Contract:
-##   - X velocity forced to `_run_speed * _speed_mult` (auto-run).
+##   - X velocity forced to run speed * difficulty * modifier multipliers.
 ##   - INPUT_TAP flips gravity between floor (+Y) and ceiling (-Y).
 ##   - Gravity magnitude, terminal velocity and flip cooldown come from
 ##     GameplayConfig (data-driven, live-tunable via Remote Config).
@@ -18,8 +18,11 @@ extends CharacterBody2D
 const Events := preload("res://src/core/events.gd")
 const GameplayConfig := preload("res://src/gameplay/gameplay_config.gd")
 
+@export var difficulty: NodePath
+
 ## +1 -> gravity pulls DOWN. -1 -> gravity pulls UP.
 var _gravity_dir: int = 1
+var _difficulty: Node
 
 ## Timestamp (ms) of the last accepted flip -- used to enforce cooldown.
 var _last_flip_ms: int = -100000
@@ -43,6 +46,7 @@ var _was_on_surface: bool = false
 
 func _ready() -> void:
     _reload_tunables()
+    _resolve_difficulty()
     add_to_group("player")
     EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
@@ -69,7 +73,7 @@ func _physics_process(delta: float) -> void:
         return
     velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * delta
     velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
-    velocity.x = _run_speed * _speed_mult
+    velocity.x = _run_speed * speed_multiplier()
     move_and_slide()
     _detect_landing()
 
@@ -95,7 +99,7 @@ func set_gravity_direction(dir: int) -> void:
 
 
 func speed_multiplier() -> float:
-    return _speed_mult
+    return _speed_mult * _difficulty_speed_multiplier()
 
 
 func gravity_multiplier() -> float:
@@ -166,3 +170,17 @@ func _reload_tunables() -> void:
     _terminal_velocity = GameplayConfig.get_float("terminal_velocity")
     _flip_cooldown_ms = GameplayConfig.get_int("tap_flip_cooldown_ms")
     _run_speed = GameplayConfig.get_float("player_base_speed")
+
+
+func _resolve_difficulty() -> void:
+    if difficulty.is_empty():
+        return
+    var n := get_node_or_null(difficulty)
+    if n != null:
+        _difficulty = n
+
+
+func _difficulty_speed_multiplier() -> float:
+    if _difficulty == null or not _difficulty.has_method("speed_multiplier"):
+        return 1.0
+    return float(_difficulty.speed_multiplier())

@@ -97,6 +97,8 @@ func _register_services() -> void:
 ## Filesystem save on real platforms; in-memory in headless CI (where
 ## user:// may not be writable).
 func _make_save_service() -> Object:
+    if OS.has_feature("headless") or DisplayServer.get_name() == "headless":
+        return _InMemorySaveService.new()
     return _FileSystemSaveService.new()
 
 

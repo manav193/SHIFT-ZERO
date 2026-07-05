@@ -52,12 +52,14 @@ var _base_speed: float = 420.0
 var _fair_min_flip_time_s: float = 0.55
 var _fair_min_flip_gap: float = 1000.0
 var _rng: RandomNumberGenerator
+var _spawning_enabled: bool = true
 
 
 func _ready() -> void:
     _reload_tunables()
     _rng = RNG.stream(RNG.STREAM_SPAWN, 42)
     _load_registry()
+    _spawning_enabled = not _types.is_empty()
     _resolve_target()
     _resolve_difficulty()
     _next_spawn_x = _first_spawn_x
@@ -72,7 +74,7 @@ func _exit_tree() -> void:
 
 
 func _process(_delta: float) -> void:
-    if _target == null:
+    if _target == null or not _spawning_enabled:
         return
     var px: float = _target.position.x
     _spawn_while_needed(px)
@@ -80,8 +82,14 @@ func _process(_delta: float) -> void:
 
 
 func _spawn_while_needed(px: float) -> void:
+    if _types.is_empty():
+        _spawning_enabled = false
+        return
     while _next_spawn_x < px + _spawn_horizon_ahead:
         var picked: Dictionary = _pick_type_fair()
+        if picked.is_empty():
+            _spawning_enabled = false
+            return
         _spawn_at(_next_spawn_x, picked)
         var raw_gap: float = _rng.randf_range(_spacing_min, _spacing_max) * _spacing_scale()
         _next_spawn_x += _apply_fair_min_gap(picked, raw_gap)
@@ -112,6 +120,9 @@ func _despawn_behind_player(px: float) -> void:
 
 
 func _spawn_at(x: float, type: Dictionary) -> void:
+    if not type.has("scene"):
+        _spawning_enabled = false
+        return
     var scene: PackedScene = type["scene"]
     var obs := scene.instantiate() as Node2D
     obs.position.x = x
@@ -139,7 +150,7 @@ func _is_fair(t: Dictionary) -> bool:
     var side: String = str(t.get("safe_side", "either"))
     if _last_safe_side == "either" or side == "either":
         return true
-    return side == _last_safe_side or true  # flips are allowed; gap enforcer handles spacing
+    return side == _last_safe_side
 
 
 func _pick_weighted() -> Dictionary:

@@ -21,6 +21,7 @@ color = Color(0.043, 0.051, 0.102, 1)
 
 [node name="Player" parent="." instance=ExtResource("1_player_scene")]
 position = Vector2(540, 1200)
+difficulty = NodePath("../DifficultyDirector")
 
 [node name="WorldStreamer" type="Node2D" parent="."]
 script = ExtResource("2_streamer_script")
