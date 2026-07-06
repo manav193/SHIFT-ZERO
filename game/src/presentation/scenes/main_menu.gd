@@ -26,6 +26,7 @@ var _root: Control
 var _city_root: Node2D
 var _showcase: SkinModel
 var _showcase_trail: Line2D
+var _portrait_dim: ColorRect
 var _portrait_scroll: ScrollContainer
 var _landscape_nodes: Array[Control] = []
 var _float_phase: float = 0.0
@@ -295,6 +296,15 @@ func _build_brand() -> void:
 
 
 func _build_portrait_layout() -> void:
+    _portrait_dim = ColorRect.new()
+    _portrait_dim.name = "PortraitDim"
+    _portrait_dim.anchor_right = 1.0
+    _portrait_dim.anchor_bottom = 1.0
+    _portrait_dim.color = Color(0.0, 0.0, 0.0, 0.54)
+    _portrait_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _portrait_dim.visible = false
+    _root.add_child(_portrait_dim)
+
     _portrait_scroll = ScrollContainer.new()
     _portrait_scroll.name = "PortraitScroll"
     _portrait_scroll.anchor_right = 1.0
@@ -305,58 +315,55 @@ func _build_portrait_layout() -> void:
 
     var margin := MarginContainer.new()
     margin.name = "SafeMargins"
-    margin.add_theme_constant_override("margin_left", 24)
-    margin.add_theme_constant_override("margin_top", 28)
-    margin.add_theme_constant_override("margin_right", 24)
-    margin.add_theme_constant_override("margin_bottom", 34)
+    margin.add_theme_constant_override("margin_left", 28)
+    margin.add_theme_constant_override("margin_top", 32)
+    margin.add_theme_constant_override("margin_right", 28)
+    margin.add_theme_constant_override("margin_bottom", 44)
     margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     _portrait_scroll.add_child(margin)
 
     var v := VBoxContainer.new()
     v.name = "PortraitStack"
     v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    v.add_theme_constant_override("separation", 18)
+    v.add_theme_constant_override("separation", 24)
     margin.add_child(v)
 
     v.add_child(_portrait_profile_panel())
-    v.add_child(_portrait_currency_grid())
-
-    var play := _menu_button("[>]  PLAY", "NEW RUN", Color(1.0, 0.76, 0.05, 1.0), _on_play_pressed, true)
-    _make_portrait_card(play, 112, 34)
-    v.add_child(play)
-
-    var nav_grid := GridContainer.new()
-    nav_grid.columns = 1
-    nav_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    nav_grid.add_theme_constant_override("h_separation", 12)
-    nav_grid.add_theme_constant_override("v_separation", 12)
-    v.add_child(nav_grid)
-    for button in [
-        _menu_button("[S]  SKINS", "%d / %d OWNED" % [(_progression.get("purchased_skins", []) as Array).size(), SkinCatalog.all().size()], Color(0.58, 0.24, 1.0, 1.0), _on_shop_pressed),
-        _menu_button("[$]  SHOP", "FRAGMENTS & SKINS", Color(0.0, 0.72, 1.0, 1.0), _on_shop_pressed, _has_shop_notice()),
-        _menu_button("[M]  MISSIONS", "DAILY TASKS", Color(0.8, 0.24, 1.0, 1.0), _on_daily_pressed, _can_claim_login()),
-        _menu_button("[A]  ACHIEVEMENTS", "CLAIM REWARDS", Color(1.0, 0.58, 0.05, 1.0), _on_achievements_pressed),
-        _menu_button("[B]  STATISTICS", "YOUR PROGRESS", Color(0.0, 0.82, 0.9, 1.0), _on_statistics_pressed),
-        _menu_button("[T]  THEME GALLERY", "%d / %d UNLOCKED" % [ThemeCatalog.unlocked_theme_ids(_progression).size(), ThemeCatalog.all().size()], Color(0.2, 1.0, 0.38, 1.0), _on_theme_gallery_pressed),
-        _menu_button("[*]  SETTINGS", "AUDIO & ACCESSIBILITY", Color(0.75, 0.85, 1.0, 1.0), _on_settings_pressed),
-    ]:
-        _make_portrait_card(button, 92, 27)
-        nav_grid.add_child(button)
-
-    v.add_child(_portrait_section(_daily_panel()))
-    v.add_child(_portrait_section(_spin_panel()))
-    v.add_child(_portrait_section(_chest_panel()))
 
     var start := _menu_button("START RUN", str(_theme.get("name", "NEON CITY")).to_upper(), Color(1.0, 0.74, 0.05, 1.0), _on_play_pressed, true)
-    _make_portrait_card(start, 116, 34)
+    _make_portrait_card(start, 146, 38)
     v.add_child(start)
 
-    var boosters := _portrait_booster_grid()
-    v.add_child(boosters)
+    var nav_grid := GridContainer.new()
+    nav_grid.columns = 2
+    nav_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    nav_grid.add_theme_constant_override("h_separation", 16)
+    nav_grid.add_theme_constant_override("v_separation", 16)
+    v.add_child(nav_grid)
+    for button in [
+        _menu_button("SHOP", "SKINS", Color(0.0, 0.72, 1.0, 1.0), _on_shop_pressed, _has_shop_notice()),
+        _menu_button("MISSIONS", "DAILY", Color(0.8, 0.24, 1.0, 1.0), _on_daily_pressed, _can_claim_login()),
+        _menu_button("SKINS", "%d/%d" % [(_progression.get("purchased_skins", []) as Array).size(), SkinCatalog.all().size()], Color(0.58, 0.24, 1.0, 1.0), _on_shop_pressed),
+        _menu_button("REWARDS", "%d READY" % _chest_total(), Color(1.0, 0.58, 0.05, 1.0), _on_chests_pressed),
+    ]:
+        _make_portrait_card(button, 112, 28)
+        nav_grid.add_child(button)
 
-    var quit := _menu_button("QUIT", "EXIT GAME", Color(0.55, 0.62, 0.72, 1.0), _on_quit_pressed)
-    _make_portrait_card(quit, 88, 26)
-    v.add_child(quit)
+    v.add_child(_portrait_reward_cards())
+    v.add_child(_portrait_currency_grid())
+
+    var more_btn := _menu_button("MORE", "EXTRAS", Color(0.75, 0.85, 1.0, 1.0), Callable())
+    _make_portrait_card(more_btn, 92, 27)
+    v.add_child(more_btn)
+
+    var extras := _portrait_extras_grid()
+    extras.visible = false
+    v.add_child(extras)
+    more_btn.pressed.connect(func() -> void:
+        extras.visible = not extras.visible
+        more_btn.text = "LESS\nEXTRAS" if extras.visible else "MORE\nEXTRAS")
+
+    v.add_child(_portrait_booster_grid())
 
 
 func _portrait_profile_panel() -> PanelContainer:
@@ -429,6 +436,44 @@ func _portrait_booster_grid() -> GridContainer:
         v.add_child(_label(_booster_icon(booster), 21, Color(1.0, 0.933, 0.0, 1.0)))
         v.add_child(_label(str(count), 20, Color.WHITE))
         grid.add_child(pill)
+    return grid
+
+
+func _portrait_reward_cards() -> GridContainer:
+    var grid := GridContainer.new()
+    grid.columns = 3
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 10)
+    grid.add_theme_constant_override("v_separation", 10)
+    grid.add_child(_compact_reward_card("LOGIN", "DAY %d" % RewardEconomy.current_login_day(_progression), Color(0.2, 1.0, 0.38, 1.0), _on_daily_login_pressed))
+    grid.add_child(_compact_reward_card("SPIN", "FREE" if RewardEconomy.can_spin(_progression) else "SOON", Color(1.0, 0.76, 0.05, 1.0), _on_lucky_spin_pressed))
+    grid.add_child(_compact_reward_card("CHESTS", str(_chest_total()), Color(0.2, 0.85, 1.0, 1.0), _on_chests_pressed))
+    return grid
+
+
+func _compact_reward_card(title: String, sub: String, color: Color, callback: Callable) -> Button:
+    var b := _menu_button(title, sub, color, callback)
+    b.custom_minimum_size = Vector2(0, 92)
+    b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    b.add_theme_font_size_override("font_size", 22)
+    return b
+
+
+func _portrait_extras_grid() -> GridContainer:
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 12)
+    grid.add_theme_constant_override("v_separation", 12)
+    for button in [
+        _menu_button("ACHIEVEMENTS", "CLAIM", Color(1.0, 0.58, 0.05, 1.0), _on_achievements_pressed),
+        _menu_button("STATISTICS", "STATS", Color(0.0, 0.82, 0.9, 1.0), _on_statistics_pressed),
+        _menu_button("THEMES", "%d/%d" % [ThemeCatalog.unlocked_theme_ids(_progression).size(), ThemeCatalog.all().size()], Color(0.2, 1.0, 0.38, 1.0), _on_theme_gallery_pressed),
+        _menu_button("SETTINGS", "A11Y", Color(0.75, 0.85, 1.0, 1.0), _on_settings_pressed),
+        _menu_button("QUIT", "EXIT", Color(0.55, 0.62, 0.72, 1.0), _on_quit_pressed),
+    ]:
+        _make_portrait_card(button, 88, 22)
+        grid.add_child(button)
     return grid
 
 
@@ -525,7 +570,8 @@ func _menu_button(title: String, sub: String, color: Color, callback: Callable, 
     b.add_theme_stylebox_override("normal", style)
     b.add_theme_stylebox_override("hover", _button_style(color, 0.95))
     b.add_theme_stylebox_override("pressed", _button_style(color, 0.65))
-    b.pressed.connect(callback)
+    if callback.is_valid():
+        b.pressed.connect(callback)
     _wire_button(b)
     _buttons.append(b)
     return b
@@ -609,6 +655,8 @@ func _update_layout() -> void:
             node.visible = not portrait
     if _portrait_scroll != null:
         _portrait_scroll.visible = portrait
+    if _portrait_dim != null:
+        _portrait_dim.visible = portrait
     var nav := _root.get_node_or_null("Nav") as Control
     var right := _root.get_node_or_null("RewardPanels") as Control
     var boosters := _root.get_node_or_null("Boosters") as Control
