@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://c8szm12gameworld1"]
+[gd_scene load_steps=12 format=3 uid="uid://c8szm12gameworld1"]
 
 [ext_resource type="PackedScene" path="res://src/gameplay/player/player.tscn" id="1_player_scene"]
 [ext_resource type="Script" path="res://src/gameplay/world/world_streamer.gd" id="2_streamer_script"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://src/presentation/hud/hud.tscn" id="8_hud_scene"]
 [ext_resource type="Script" path="res://src/gameplay/world/parallax_background.gd" id="9_parallax_script"]
 [ext_resource type="Script" path="res://src/gameplay/collectibles/collectible_spawner.gd" id="10_collectible_spawner_script"]
+[ext_resource type="Script" path="res://src/gameplay/world/world_theme_controller.gd" id="11_theme_script"]
 
 [node name="GameWorld" type="Node2D"]
 
@@ -28,6 +29,11 @@ difficulty = NodePath("../DifficultyDirector")
 [node name="ParallaxBackground" type="Node2D" parent="."]
 script = ExtResource("9_parallax_script")
 target = NodePath("../Player")
+
+[node name="WorldThemeController" type="Node2D" parent="."]
+script = ExtResource("11_theme_script")
+target = NodePath("../Player")
+background = NodePath("../BgLayer/Background")
 
 [node name="WorldStreamer" type="Node2D" parent="."]
 script = ExtResource("2_streamer_script")

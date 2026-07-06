@@ -21,6 +21,7 @@ const RUN_CONTINUE_GRANTED  := "run/continue_granted"
 const RUN_PAUSED            := "run/paused"
 const RUN_RESUMED           := "run/resumed"
 const RUN_LEVEL_CHANGED     := "run/level_changed"
+const OBSTACLE_AVOIDED      := "run/obstacle_avoided"
 
 # ---------- Modifier ----------
 const MODIFIER_ACTIVATED    := "modifier/activated"
@@ -45,6 +46,9 @@ const POWERUP_COLLECTED     := "powerup/collected"
 const POWERUP_ACTIVATED     := "powerup/activated"
 const POWERUP_EXPIRED       := "powerup/expired"
 const SHIELD_USED           := "powerup/shield_used"
+
+# ---------- World themes ----------
+const WORLD_THEME_CHANGED   := "world/theme_changed"
 
 # ---------- Settings / a11y ----------
 const SETTINGS_CHANGED      := "settings/changed"

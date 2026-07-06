@@ -18,6 +18,8 @@ extends Control
 
 const Events := preload("res://src/core/events.gd")
 const ProgressionRules := preload("res://src/core/progression_rules.gd")
+const ProgressionContent := preload("res://src/core/progression_content.gd")
+const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
 
 @export var run_director: NodePath
 @export var modifier_manager: NodePath
@@ -57,6 +59,10 @@ var _target_score: int = 0
 var _flash: ColorRect
 var _run_coins: int = 0
 var _run_powerups: int = 0
+var _run_flips: int = 0
+var _run_obstacles_avoided: int = 0
+var _run_birds_avoided: int = 0
+var _run_started_ms: int = 0
 var _total_coins: int = 0
 var _player_xp: int = 0
 var _player_level: int = 1
@@ -80,6 +86,9 @@ func _ready() -> void:
     _wire_button(_pause_restart_btn)
     _wire_button(_go_restart_btn)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
+    EventBus.subscribe(Events.RUN_STARTED, _on_run_started)
+    EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_gravity_flipped)
+    EventBus.subscribe(Events.OBSTACLE_AVOIDED, _on_obstacle_avoided)
     EventBus.subscribe(Events.COIN_COLLECTED, _on_coin_collected)
     EventBus.subscribe(Events.POWERUP_COLLECTED, _on_powerup_collected)
     EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
@@ -99,6 +108,9 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
+    EventBus.unsubscribe(Events.RUN_STARTED, _on_run_started)
+    EventBus.unsubscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_gravity_flipped)
+    EventBus.unsubscribe(Events.OBSTACLE_AVOIDED, _on_obstacle_avoided)
     EventBus.unsubscribe(Events.COIN_COLLECTED, _on_coin_collected)
     EventBus.unsubscribe(Events.POWERUP_COLLECTED, _on_powerup_collected)
     EventBus.unsubscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
@@ -159,6 +171,7 @@ func _on_run_finished(_payload: Dictionary) -> void:
     _persist_run_coins()
     var xp_earned := ProgressionRules.run_xp(distance_m, _run_coins, _run_powerups, current)
     var leveled := _persist_run_xp(xp_earned)
+    _persist_run_stats(distance_m, current)
     if new_best:
         _best_score = current
         _persist_best_score(_best_score, distance)
@@ -195,6 +208,25 @@ func _on_coin_collected(payload: Dictionary) -> void:
 
 func _on_powerup_collected(_payload: Dictionary) -> void:
     _run_powerups += 1
+
+
+func _on_run_started(_payload: Dictionary) -> void:
+    _run_coins = 0
+    _run_powerups = 0
+    _run_flips = 0
+    _run_obstacles_avoided = 0
+    _run_birds_avoided = 0
+    _run_started_ms = Time.get_ticks_msec()
+
+
+func _on_gravity_flipped(_payload: Dictionary) -> void:
+    _run_flips += 1
+
+
+func _on_obstacle_avoided(payload: Dictionary) -> void:
+    _run_obstacles_avoided += 1
+    if str(payload.get("category", "")) == "bird":
+        _run_birds_avoided += 1
 
 
 func _on_powerup_activated(payload: Dictionary) -> void:
@@ -259,6 +291,41 @@ func _persist_run_coins() -> void:
         return state)
     if result.ok:
         _total_coins += _run_coins
+
+
+func _persist_run_stats(distance_m: int, score: int) -> void:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    var run_time_s := int(maxi(0, Time.get_ticks_msec() - _run_started_ms) / 1000)
+    save.mutate(func(state: Dictionary) -> Dictionary:
+        var progression: Dictionary = ProgressionContent.ensure_progression(state.get("progression", {}))
+        var stats: Dictionary = progression.get("player_stats", ProgressionContent.default_stats())
+        stats["total_runs"] = int(stats.get("total_runs", 0)) + 1
+        stats["total_deaths"] = int(stats.get("total_deaths", 0)) + 1
+        stats["best_distance"] = maxi(int(stats.get("best_distance", 0)), distance_m)
+        stats["best_score"] = maxi(int(stats.get("best_score", 0)), score)
+        stats["total_play_time_s"] = int(stats.get("total_play_time_s", 0)) + run_time_s
+        stats["gravity_flips"] = int(stats.get("gravity_flips", 0)) + _run_flips
+        stats["obstacles_avoided"] = int(stats.get("obstacles_avoided", 0)) + _run_obstacles_avoided
+        stats["birds_avoided"] = int(stats.get("birds_avoided", 0)) + _run_birds_avoided
+        stats["coins_collected"] = int(stats.get("coins_collected", 0)) + _run_coins
+        stats["powerups_collected"] = int(stats.get("powerups_collected", 0)) + _run_powerups
+        stats["highest_run_level"] = maxi(int(stats.get("highest_run_level", 1)), _last_run_level)
+        progression["player_stats"] = stats
+        var run := {
+            "coins": _run_coins,
+            "distance_m": distance_m,
+            "highest_run_level": _last_run_level,
+            "powerups": _run_powerups,
+            "flips": _run_flips,
+            "birds_avoided": _run_birds_avoided,
+        }
+        progression = ProgressionContent.update_daily_progress(progression, ProgressionContent.daily_counters(stats, run, progression))
+        progression = ProgressionContent.update_achievements(progression)
+        progression = ThemeCatalog.unlock_available(progression)
+        state["progression"] = progression
+        return state)
 
 
 func _persist_run_xp(xp_earned: int) -> bool:

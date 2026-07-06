@@ -13,6 +13,7 @@ const Events := preload("res://src/core/events.gd")
 var _collected: bool = false
 var _origin_y: float = 0.0
 var _phase: float = 0.0
+var _face_color: Color = Color(1.0, 0.84, 0.0, 1.0)
 
 
 func _ready() -> void:
@@ -30,6 +31,18 @@ func _process(delta: float) -> void:
     position.y = _origin_y + sin(_phase) * 18.0
     scale.x = 0.75 + abs(sin(_phase * 1.8)) * 0.5
     _magnet_pull(delta)
+
+
+func apply_theme_color(color: Color) -> void:
+    _face_color = color
+    var face := get_node_or_null("Face")
+    if face is Polygon2D:
+        (face as Polygon2D).color = _face_color
+    var glow := get_node_or_null("Glow")
+    if glow is Polygon2D:
+        var glow_color := _face_color
+        glow_color.a = 0.28
+        (glow as Polygon2D).color = glow_color
 
 
 func _magnet_pull(delta: float) -> void:

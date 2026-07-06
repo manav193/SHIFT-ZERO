@@ -16,9 +16,15 @@ func test_default_progression_includes_total_coins():
     assert_eq(progression.total_coins, 0)
     assert_eq(progression.player_xp, 0)
     assert_eq(progression.player_level, 1)
+    assert_true(progression.has("daily"))
+    assert_true(progression.has("achievements_unlocked"))
+    assert_true(progression.has("achievement_rewards_claimed"))
+    assert_true(progression.has("player_stats"))
     assert_true(progression.has("purchased_skins"))
     assert_true(progression.purchased_skins.has(SkinCatalog.CLASSIC))
     assert_eq(progression.equipped_skin, SkinCatalog.CLASSIC)
+    assert_true(progression.has("unlocked_themes"))
+    assert_true(progression.unlocked_themes.has("neon_city"))
 
 
 func test_total_coins_can_be_incremented():

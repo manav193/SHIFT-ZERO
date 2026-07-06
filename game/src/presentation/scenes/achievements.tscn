@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://shift0achieve001"]
+
+[ext_resource type="Script" path="res://src/presentation/scenes/achievements.gd" id="1_achievements"]
+
+[node name="Achievements" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_achievements")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.043, 0.051, 0.102, 1)
+
+[node name="Root" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = 32.0
+offset_right = -36.0
+offset_bottom = -32.0
+theme_override_constants/separation = 24
+
+[node name="Header" type="HBoxContainer" parent="Root"]
+custom_minimum_size = Vector2(0, 84)
+theme_override_constants/separation = 22
+
+[node name="BackBtn" type="Button" parent="Root/Header"]
+custom_minimum_size = Vector2(150, 72)
+text = "BACK"
+theme_override_font_sizes/font_size = 30
+
+[node name="Title" type="Label" parent="Root/Header"]
+size_flags_horizontal = 3
+text = "ACHIEVEMENTS"
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 50
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="Scroll" type="ScrollContainer" parent="Root"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="Root/Scroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 12

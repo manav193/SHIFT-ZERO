@@ -33,6 +33,7 @@ var _idle_phase: float = 0.0
 var _idle_amp: float = 0.0
 var _idle_speed: float = 0.0
 var _spawn_scale: Vector2 = Vector2.ONE
+var _theme_palette: Array = []
 
 
 func _ready() -> void:
@@ -73,10 +74,16 @@ func _on_body_entered(body: Node) -> void:
 
 
 func _apply_random_color() -> void:
-    var color: Color = _PALETTE[randi() % _PALETTE.size()]
+    var palette := _theme_palette if not _theme_palette.is_empty() else _PALETTE
+    var color: Color = palette[randi() % palette.size()]
     for child in get_children():
         if child is CanvasItem and not (child is CollisionShape2D):
             (child as CanvasItem).modulate = color
+
+
+func apply_theme_palette(palette: Array) -> void:
+    _theme_palette = palette.duplicate()
+    _apply_random_color()
 
 
 func _play_spawn_in() -> void:

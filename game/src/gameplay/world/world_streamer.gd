@@ -26,11 +26,13 @@ var _last_index: int = -999999
 var _chunk_width: float = 2000.0
 var _ahead: int = 3
 var _behind: int = 1
+var _ground_color: Color = Color(1.0, 0.169, 0.839, 1.0)
 
 
 func _ready() -> void:
     _reload_tunables()
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+    EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
     _resolve_target()
     if _target != null:
         _refresh_around(_index_of(_target))
@@ -41,6 +43,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
     EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+    EventBus.unsubscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
 
 
 func _process(_delta: float) -> void:
@@ -69,6 +72,7 @@ func _spawn(idx: int) -> void:
     chunk.position = Vector2(float(idx) * _chunk_width, 0.0)
     add_child(chunk)
     _chunks[idx] = chunk
+    _apply_theme_to_chunk(chunk)
 
 
 func _despawn(idx: int) -> void:
@@ -100,3 +104,18 @@ func _reload_tunables() -> void:
 
 func _on_remote_config_activated(_payload: Dictionary) -> void:
     _reload_tunables()
+
+
+func _on_world_theme_changed(payload: Dictionary) -> void:
+    var theme: Dictionary = payload.get("theme", {})
+    _ground_color = theme.get("ground", _ground_color)
+    for chunk in _chunks.values():
+        if chunk is Node2D:
+            _apply_theme_to_chunk(chunk)
+
+
+func _apply_theme_to_chunk(chunk: Node2D) -> void:
+    for path in ["Floor/FloorVisual", "Ceiling/CeilingVisual"]:
+        var visual := chunk.get_node_or_null(path)
+        if visual is ColorRect:
+            (visual as ColorRect).color = _ground_color

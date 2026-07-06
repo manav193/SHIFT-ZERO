@@ -1,0 +1,162 @@
+[gd_scene load_steps=3 format=3 uid="uid://shift0themes001"]
+
+[ext_resource type="Script" path="res://src/presentation/scenes/theme_gallery.gd" id="1_theme_gallery"]
+
+[sub_resource type="StyleBoxFlat" id="PreviewBox_theme"]
+bg_color = Color(0.02, 0.03, 0.06, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.941, 1, 0.7)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="ThemeGallery" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_theme_gallery")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.043, 0.051, 0.102, 1)
+
+[node name="Root" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = -32.0
+offset_bottom = -24.0
+theme_override_constants/separation = 22
+
+[node name="Header" type="HBoxContainer" parent="Root"]
+theme_override_constants/separation = 22
+
+[node name="BackBtn" type="Button" parent="Root/Header"]
+custom_minimum_size = Vector2(150, 64)
+text = "BACK"
+theme_override_font_sizes/font_size = 30
+
+[node name="Title" type="Label" parent="Root/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "THEME GALLERY"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 48
+theme_override_colors/font_color = Color(0, 0.941, 1, 1)
+
+[node name="Body" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="Scroll" type="ScrollContainer" parent="Root/Body"]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="Root/Body/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Preview" type="PanelContainer" parent="Root/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("PreviewBox_theme")
+
+[node name="V" type="VBoxContainer" parent="Root/Body/Preview"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Root/Body/Preview/V"]
+layout_mode = 2
+text = "NEON CITY"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 48
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="State" type="Label" parent="Root/Body/Preview/V"]
+layout_mode = 2
+text = "UNLOCKED"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.3, 1, 0.55, 1)
+
+[node name="Stage" type="Control" parent="Root/Body/Preview/V"]
+custom_minimum_size = Vector2(0, 560)
+layout_mode = 2
+size_flags_vertical = 3
+clip_contents = true
+
+[node name="SkyTop" type="ColorRect" parent="Root/Body/Preview/V/Stage"]
+anchor_right = 1.0
+anchor_bottom = 0.5
+color = Color(0.025, 0.035, 0.09, 1)
+
+[node name="SkyBottom" type="ColorRect" parent="Root/Body/Preview/V/Stage"]
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.06, 0.02, 0.12, 1)
+
+[node name="BandA" type="ColorRect" parent="Root/Body/Preview/V/Stage"]
+anchor_top = 0.42
+anchor_right = 1.0
+anchor_bottom = 0.62
+color = Color(0.055, 0.03, 0.12, 0.85)
+
+[node name="BandB" type="ColorRect" parent="Root/Body/Preview/V/Stage"]
+anchor_top = 0.62
+anchor_right = 1.0
+anchor_bottom = 0.79
+color = Color(0.02, 0.11, 0.14, 0.65)
+
+[node name="Ground" type="ColorRect" parent="Root/Body/Preview/V/Stage"]
+anchor_top = 0.82
+anchor_right = 1.0
+anchor_bottom = 0.88
+color = Color(1, 0.169, 0.839, 1)
+
+[node name="ObstacleA" type="ColorRect" parent="Root/Body/Preview/V/Stage"]
+anchor_left = 0.24
+anchor_top = 0.54
+anchor_right = 0.32
+anchor_bottom = 0.82
+color = Color(1, 0.271, 0.325, 1)
+
+[node name="ObstacleB" type="Polygon2D" parent="Root/Body/Preview/V/Stage"]
+position = Vector2(620, 250)
+polygon = PackedVector2Array(0, -70, 70, 60, -70, 60)
+color = Color(0, 0.941, 1, 1)
+
+[node name="Coin" type="Polygon2D" parent="Root/Body/Preview/V/Stage"]
+position = Vector2(390, 285)
+polygon = PackedVector2Array(0, -28, 20, -20, 28, 0, 20, 20, 0, 28, -20, 20, -28, 0, -20, -20)
+color = Color(1, 0.933, 0, 1)
+
+[node name="Powerup" type="Polygon2D" parent="Root/Body/Preview/V/Stage"]
+position = Vector2(500, 350)
+polygon = PackedVector2Array(0, -34, 30, -18, 30, 18, 0, 34, -30, 18, -30, -18)
+color = Color(0, 0.941, 1, 1)
+
+[node name="Particles" type="CPUParticles2D" parent="Root/Body/Preview/V/Stage"]
+position = Vector2(540, 260)
+emitting = true
+amount = 26
+lifetime = 1.4
+speed_scale = 0.55
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 20.0
+initial_velocity_max = 90.0
+scale_amount_min = 3.0
+scale_amount_max = 6.0
+color = Color(0, 0.941, 1, 0.85)

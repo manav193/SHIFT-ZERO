@@ -59,6 +59,7 @@ var _fair_min_flip_gap: float = 1000.0
 var _difficulty_scale_distance: float = 10000.0
 var _rng: RandomNumberGenerator
 var _spawning_enabled: bool = true
+var _obstacle_palette: Array = []
 
 
 func _ready() -> void:
@@ -70,6 +71,7 @@ func _ready() -> void:
 	_resolve_difficulty()
 	_next_spawn_x = _first_spawn_x
 	EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+	EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
 	print("Obstacles", "spawner ready. types=%d spacing=[%.0f,%.0f] first_x=%.0f" % [
 		_types.size(), _spacing_min, _spacing_max, _first_spawn_x,
 	])
@@ -77,6 +79,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
+	EventBus.unsubscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
 
 
 func _process(_delta: float) -> void:
@@ -126,6 +129,10 @@ func _despawn_behind_player(px: float) -> void:
 	var cutoff: float = px - _despawn_behind
 	while not _spawned.is_empty() and _spawned[0].position.x < cutoff:
 		var obs: Node2D = _spawned.pop_front()
+		EventBus.emit(Events.OBSTACLE_AVOIDED, {
+			"id": str(obs.get_meta("obstacle_id", "")),
+			"category": str(obs.get_meta("category", "ground")),
+		})
 		obs.queue_free()
 
 
@@ -137,20 +144,24 @@ func _spawn_at(x: float, type: Dictionary) -> void:
 	var scene: PackedScene = type["scene"]
 	var y := _y_for(type)
 	var scale := _scale_for(type, x)
-	_spawn_one(scene, Vector2(x, y), scale)
+	_spawn_one(scene, Vector2(x, y), scale, str(type.get("id", "")), str(type.get("category", "ground")))
 	if str(type.get("category", "")) == "bird" and _rng.randf() < float(_profile_for_spawn(x).get("bird_pair_chance", 0.0)):
 		var pair_x := x + _rng.randf_range(220.0, 340.0)
 		var pair_y := clampf(y + _rng.randf_range(-180.0, 180.0), float(type.get("y_min", y)), float(type.get("y_max", y)))
 		var pair_scale := _scale_for(type, x)
-		_spawn_one(scene, Vector2(pair_x, pair_y), pair_scale)
+		_spawn_one(scene, Vector2(pair_x, pair_y), pair_scale, str(type.get("id", "")), str(type.get("category", "ground")))
 		_last_spawn_extra_gap = 260.0
 
 
-func _spawn_one(scene: PackedScene, spawn_position: Vector2, spawn_scale: Vector2) -> void:
+func _spawn_one(scene: PackedScene, spawn_position: Vector2, spawn_scale: Vector2, obstacle_id: String, category: String) -> void:
 	var obs := scene.instantiate() as Node2D
 	obs.position = spawn_position
 	obs.scale = spawn_scale
+	obs.set_meta("obstacle_id", obstacle_id)
+	obs.set_meta("category", category)
 	add_child(obs)
+	if obs.has_method("apply_theme_palette") and not _obstacle_palette.is_empty():
+		obs.apply_theme_palette(_obstacle_palette)
 	_spawned.append(obs)
 
 
@@ -281,6 +292,14 @@ func _reload_tunables() -> void:
 
 func _on_remote_config_activated(_payload: Dictionary) -> void:
 	_reload_tunables()
+
+
+func _on_world_theme_changed(payload: Dictionary) -> void:
+	var theme: Dictionary = payload.get("theme", {})
+	_obstacle_palette = theme.get("obstacles", [])
+	for obs in _spawned:
+		if is_instance_valid(obs) and obs.has_method("apply_theme_palette"):
+			obs.apply_theme_palette(_obstacle_palette)
 
 
 func _scale_for(type: Dictionary, spawn_x: float) -> Vector2:

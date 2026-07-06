@@ -8,9 +8,17 @@ const ProgressionRules := preload("res://src/core/progression_rules.gd")
 const _GAME_WORLD_PATH := "res://src/gameplay/game_world/game_world.tscn"
 const _SETTINGS_PATH := "res://src/presentation/scenes/settings.tscn"
 const _SHOP_PATH := "res://src/presentation/scenes/shop.tscn"
+const _DAILY_PATH := "res://src/presentation/scenes/daily_missions.tscn"
+const _ACHIEVEMENTS_PATH := "res://src/presentation/scenes/achievements.tscn"
+const _STATISTICS_PATH := "res://src/presentation/scenes/statistics.tscn"
+const _THEME_GALLERY_PATH := "res://src/presentation/scenes/theme_gallery.tscn"
 
 @onready var _play_btn: Button = $Center/V/PlayBtn
 @onready var _shop_btn: Button = $Center/V/ShopBtn
+@onready var _daily_btn: Button = $Center/V/DailyBtn
+@onready var _achievements_btn: Button = $Center/V/AchievementsBtn
+@onready var _statistics_btn: Button = $Center/V/StatisticsBtn
+@onready var _theme_gallery_btn: Button = $Center/V/ThemeGalleryBtn
 @onready var _settings_btn: Button = $Center/V/SettingsBtn
 @onready var _quit_btn: Button = $Center/V/QuitBtn
 @onready var _coins_label: Label = $Center/V/Coins
@@ -20,10 +28,18 @@ const _SHOP_PATH := "res://src/presentation/scenes/shop.tscn"
 func _ready() -> void:
     _play_btn.pressed.connect(_on_play_pressed)
     _shop_btn.pressed.connect(_on_shop_pressed)
+    _daily_btn.pressed.connect(_on_daily_pressed)
+    _achievements_btn.pressed.connect(_on_achievements_pressed)
+    _statistics_btn.pressed.connect(_on_statistics_pressed)
+    _theme_gallery_btn.pressed.connect(_on_theme_gallery_pressed)
     _settings_btn.pressed.connect(_on_settings_pressed)
     _quit_btn.pressed.connect(_on_quit_pressed)
     _wire_button(_play_btn)
     _wire_button(_shop_btn)
+    _wire_button(_daily_btn)
+    _wire_button(_achievements_btn)
+    _wire_button(_statistics_btn)
+    _wire_button(_theme_gallery_btn)
     _wire_button(_settings_btn)
     _wire_button(_quit_btn)
     _load_progress_summary()
@@ -45,6 +61,30 @@ func _on_shop_pressed() -> void:
     var result: Result = SceneRouter.push(_SHOP_PATH)
     if not result.ok:
         push_error("MainMenu", "shop failed: %s" % result.error)
+
+
+func _on_daily_pressed() -> void:
+    var result: Result = SceneRouter.push(_DAILY_PATH)
+    if not result.ok:
+        push_error("MainMenu", "daily failed: %s" % result.error)
+
+
+func _on_achievements_pressed() -> void:
+    var result: Result = SceneRouter.push(_ACHIEVEMENTS_PATH)
+    if not result.ok:
+        push_error("MainMenu", "achievements failed: %s" % result.error)
+
+
+func _on_statistics_pressed() -> void:
+    var result: Result = SceneRouter.push(_STATISTICS_PATH)
+    if not result.ok:
+        push_error("MainMenu", "statistics failed: %s" % result.error)
+
+
+func _on_theme_gallery_pressed() -> void:
+    var result: Result = SceneRouter.push(_THEME_GALLERY_PATH)
+    if not result.ok:
+        push_error("MainMenu", "theme gallery failed: %s" % result.error)
 
 
 func _on_quit_pressed() -> void:
