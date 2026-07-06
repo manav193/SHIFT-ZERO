@@ -2,6 +2,7 @@
 extends Control
 
 const ProgressionContent := preload("res://src/core/progression_content.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -10,6 +11,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -39,6 +41,7 @@ func _reload() -> void:
     _date_label.text = str(daily.get("last_refresh_date", ""))
     for mission in daily.get("missions", []):
         _add_mission_row(mission)
+    PremiumUI.style_tree(_list)
 
 
 func _add_mission_row(mission: Dictionary) -> void:
@@ -76,6 +79,7 @@ func _add_mission_row(mission: Dictionary) -> void:
     button.pressed.connect(func() -> void: _claim(id))
     row.add_child(button)
     _list.add_child(row)
+    PremiumUI.style_tree(row)
 
 
 func _claim(id: String) -> void:

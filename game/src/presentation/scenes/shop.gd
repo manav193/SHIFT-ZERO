@@ -5,6 +5,7 @@ extends Control
 
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -29,6 +30,7 @@ var _fragments: Dictionary = {}
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _action_btn.pressed.connect(_on_action_pressed)
     _wire_button(_back_btn)
@@ -36,6 +38,7 @@ func _ready() -> void:
     _load_progression()
     _build_skin_list()
     _select_skin(_equipped)
+    PremiumUI.style_tree(self)
     _update_layout()
 
 

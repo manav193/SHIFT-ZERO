@@ -18,5 +18,20 @@ default_color = Color(0, 0.941, 1, 0.65)
 begin_cap_mode = 2
 end_cap_mode = 2
 
+[node name="LiftParticles" type="CPUParticles2D" parent="."]
+position = Vector2(-24, 18)
+emitting = false
+amount = 28
+lifetime = 0.42
+speed_scale = 1.0
+direction = Vector2(0, 1)
+spread = 36.0
+gravity = Vector2(0, 120)
+initial_velocity_min = 120.0
+initial_velocity_max = 260.0
+scale_amount_min = 2.0
+scale_amount_max = 6.0
+color = Color(0, 0.941, 1, 0.8)
+
 [node name="Collider" type="CollisionShape2D" parent="."]
 shape = SubResource("RectShape_player_m11")

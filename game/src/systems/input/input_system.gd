@@ -13,6 +13,7 @@ const Events := preload("res://src/core/events.gd")
 const _TAP_DEBOUNCE_MS := 45
 
 var _last_tap_ms: int = -100000
+var _holding: bool = false
 
 
 func _ready() -> void:
@@ -20,22 +21,61 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-    if _is_direct_tap(event):
+    if _is_direct_press(event):
+        _emit_hold_begin(event)
         _emit_tap(event)
+    elif _is_direct_release(event):
+        _emit_hold_end(event)
 
 
 func _unhandled_input(event: InputEvent) -> void:
     if event.is_action_pressed("game_tap"):
+        _emit_hold_begin(event)
         _emit_tap(event)
+    elif event.is_action_released("game_tap"):
+        _emit_hold_end(event)
 
 
-func _is_direct_tap(event: InputEvent) -> bool:
+func _is_direct_press(event: InputEvent) -> bool:
     if event is InputEventScreenTouch:
         return (event as InputEventScreenTouch).pressed and not (event as InputEventScreenTouch).canceled
     if event is InputEventMouseButton:
         var mouse := event as InputEventMouseButton
         return mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT
     return false
+
+
+func _is_direct_release(event: InputEvent) -> bool:
+    if event is InputEventScreenTouch:
+        return not (event as InputEventScreenTouch).pressed
+    if event is InputEventMouseButton:
+        var mouse := event as InputEventMouseButton
+        return not mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT
+    return false
+
+
+func _emit_hold_begin(event: InputEvent) -> void:
+    if _holding:
+        return
+    if _is_ui_blocked_tap(event):
+        return
+    _holding = true
+    EventBus.emit(Events.INPUT_HOLD_BEGIN, {
+        "t_ms": Time.get_ticks_msec(),
+        "device": _device_kind(event),
+    })
+    get_viewport().set_input_as_handled()
+
+
+func _emit_hold_end(event: InputEvent) -> void:
+    if not _holding:
+        return
+    _holding = false
+    EventBus.emit(Events.INPUT_HOLD_END, {
+        "t_ms": Time.get_ticks_msec(),
+        "device": _device_kind(event),
+    })
+    get_viewport().set_input_as_handled()
 
 
 func _emit_tap(event: InputEvent) -> void:

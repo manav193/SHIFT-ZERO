@@ -27,6 +27,25 @@ static func xp_into_level(total_xp: int) -> int:
     return xp
 
 
+static func prestige_rank_for_level(level: int) -> String:
+    if level <= 50:
+        return "LEVEL %d" % maxi(1, level)
+    var ranks := [
+        "Bronze I", "Bronze II", "Bronze III", "Bronze IV", "Bronze V",
+        "Silver I", "Silver II", "Silver III", "Silver IV", "Silver V",
+        "Gold I", "Gold II", "Gold III", "Gold IV", "Gold V",
+        "Platinum I", "Platinum II", "Platinum III", "Platinum IV", "Platinum V",
+        "Diamond I", "Diamond II", "Diamond III", "Diamond IV", "Diamond V",
+        "Master", "Grandmaster", "SHIFT ZERO",
+    ]
+    var index := mini(level - 51, ranks.size() - 1)
+    return ranks[index]
+
+
+static func prestige_rank_for_xp(total_xp: int) -> String:
+    return prestige_rank_for_level(level_for_total_xp(total_xp))
+
+
 static func run_xp(distance_m: int, coins: int, powerups: int, score: int) -> int:
     return int(distance_m / 10) + coins * 5 + powerups * 25 + int(score / 10)
 

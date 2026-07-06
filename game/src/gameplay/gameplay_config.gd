@@ -16,6 +16,9 @@ const _KEY_PREFIX := "gameplay."
 const _HARDCODED_FALLBACK := {
     "player_base_speed":               420.0,
     "gravity_magnitude":               1600.0,
+    "hold_lift_force":                 2450.0,
+    "hold_lift_max_velocity":          1250.0,
+    "hold_air_drag":                      0.08,
     "terminal_velocity":                1800.0,
     "tap_flip_cooldown_ms":              80,
     "invulnerability_after_continue_s":  1.5,

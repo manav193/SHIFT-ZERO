@@ -24,8 +24,10 @@ const RewardEconomy := preload("res://src/core/reward_economy.gd")
 
 @onready var _model: SkinModel = $SkinModel
 @onready var _trail: Line2D = $Trail
+@onready var _lift_particles: CPUParticles2D = $LiftParticles
 
-## +1 -> gravity pulls DOWN. -1 -> gravity pulls UP.
+## Gravity always pulls DOWN. This field remains for older helpers that inspect
+## a gravity direction value.
 var _gravity_dir: int = 1
 var _difficulty: Node
 var _visual_tween: Tween
@@ -36,6 +38,9 @@ var _last_flip_ms: int = -100000
 
 # Cached tunables, refreshed on _ready and whenever Remote Config activates.
 var _gravity_magnitude: float = 1600.0
+var _lift_force: float = 2450.0
+var _lift_max_velocity: float = 1250.0
+var _air_drag: float = 0.08
 var _terminal_velocity: float = 1800.0
 var _flip_cooldown_ms: int = 80
 var _run_speed: float = 420.0
@@ -50,6 +55,7 @@ var _magnet_until_ms: int = 0
 var _double_score_until_ms: int = 0
 var _magnet_announced_expired: bool = true
 var _double_score_announced_expired: bool = true
+var _holding_lift: bool = false
 
 ## True while the run is RUNNING. Toggled by RUN_STARTED and RUN_FINISHED.
 var _active: bool = false
@@ -64,8 +70,10 @@ func _ready() -> void:
     _resolve_difficulty()
     _load_skin()
     _apply_skin()
+    _configure_lift_particles()
     add_to_group("player")
-    EventBus.subscribe(Events.INPUT_TAP, _on_input_tap)
+    EventBus.subscribe(Events.INPUT_HOLD_BEGIN, _on_input_hold_begin)
+    EventBus.subscribe(Events.INPUT_HOLD_END, _on_input_hold_end)
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
     EventBus.subscribe(Events.RUN_STARTED, _on_run_started)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
@@ -78,7 +86,8 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-    EventBus.unsubscribe(Events.INPUT_TAP, _on_input_tap)
+    EventBus.unsubscribe(Events.INPUT_HOLD_BEGIN, _on_input_hold_begin)
+    EventBus.unsubscribe(Events.INPUT_HOLD_END, _on_input_hold_end)
     EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
     EventBus.unsubscribe(Events.RUN_STARTED, _on_run_started)
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
@@ -95,8 +104,12 @@ func _physics_process(delta: float) -> void:
     _update_player_feel(delta)
     _update_trail()
     _update_boss_gravity_expiry()
-    velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * _boss_gravity_mult * delta
-    velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
+    var gravity_force := _gravity_magnitude * _gravity_mult * _boss_gravity_mult
+    velocity.y += gravity_force * delta
+    if _holding_lift:
+        velocity.y -= _lift_force * _gravity_mult * delta
+    velocity.y = lerpf(velocity.y, 0.0, _air_drag * delta)
+    velocity.y = clampf(velocity.y, -_lift_max_velocity, _terminal_velocity)
     velocity.x = _run_speed * speed_multiplier()
     move_and_slide()
     _detect_landing()
@@ -108,12 +121,11 @@ func gravity_direction() -> int:
 
 
 func set_gravity_direction(dir: int) -> void:
-    var normalized := 1 if dir >= 0 else -1
-    if normalized == _gravity_dir:
+    var normalized := 1
+    if normalized == _gravity_dir and dir >= 0:
         return
     _gravity_dir = normalized
-    # Reset vertical velocity on flip for a snappy, predictable feel.
-    velocity.y = 0.0
+    velocity.y = minf(velocity.y, 0.0)
     EventBus.emit(Events.PLAYER_GRAVITY_FLIPPED, {
         "dir": _gravity_dir,
         "position": position,
@@ -121,7 +133,7 @@ func set_gravity_direction(dir: int) -> void:
         "t_ms": Time.get_ticks_msec(),
     })
     _play_flip_juice()
-    print("Player", "gravity flipped -> %d" % _gravity_dir)
+    print("Player", "lift pulse")
 
 
 func speed_multiplier() -> float:
@@ -186,14 +198,27 @@ func _detect_landing() -> void:
     _was_on_surface = on_surface
 
 
-func _on_input_tap(_payload: Dictionary) -> void:
+func _on_input_hold_begin(_payload: Dictionary) -> void:
     if not _active:
         return
     var now := Time.get_ticks_msec()
     if now - _last_flip_ms < _flip_cooldown_ms:
         return
     _last_flip_ms = now
-    set_gravity_direction(-_gravity_dir)
+    _holding_lift = true
+    velocity.y = minf(velocity.y, -_lift_force * 0.08)
+    _gravity_dir = 1
+    EventBus.emit(Events.PLAYER_GRAVITY_FLIPPED, {
+        "dir": _gravity_dir,
+        "position": position,
+        "color": _skin.get("flash", Color(0.0, 0.941, 1.0, 1.0)),
+        "t_ms": now,
+    })
+    _play_flip_juice()
+
+
+func _on_input_hold_end(_payload: Dictionary) -> void:
+    _holding_lift = false
 
 
 func _on_remote_config_activated(_payload: Dictionary) -> void:
@@ -211,6 +236,7 @@ func _on_run_started(_payload: Dictionary) -> void:
     _double_score_until_ms = 0
     _magnet_announced_expired = true
     _double_score_announced_expired = true
+    _holding_lift = false
     _trail.clear_points()
     _consume_pre_run_boosters()
     print("Player", "activated")
@@ -220,6 +246,7 @@ func _on_run_finished(payload: Dictionary) -> void:
     if not _active:
         return
     _active = false
+    _holding_lift = false
     velocity = Vector2.ZERO
     print("Player", "run ended: %s" % payload)
 
@@ -256,6 +283,9 @@ func _update_boss_gravity_expiry() -> void:
 
 func _reload_tunables() -> void:
     _gravity_magnitude = GameplayConfig.get_float("gravity_magnitude")
+    _lift_force = GameplayConfig.get_float("hold_lift_force")
+    _lift_max_velocity = GameplayConfig.get_float("hold_lift_max_velocity")
+    _air_drag = GameplayConfig.get_float("hold_air_drag")
     _terminal_velocity = GameplayConfig.get_float("terminal_velocity")
     _flip_cooldown_ms = GameplayConfig.get_int("tap_flip_cooldown_ms")
     _run_speed = GameplayConfig.get_float("player_base_speed")
@@ -293,6 +323,8 @@ func _apply_skin() -> void:
     _trail.width = _model.trail_width()
     _trail.width_curve = _trail_width_curve()
     _trail.top_level = true
+    if _lift_particles != null:
+        _lift_particles.color = _skin.get("trail", Color(0.0, 0.941, 1.0, 1.0))
 
 
 func _update_trail() -> void:
@@ -302,14 +334,18 @@ func _update_trail() -> void:
     while _trail.get_point_count() > 28:
         _trail.remove_point(0)
     var speed: float = abs(velocity.x)
-    _trail.width = lerpf(_trail.width, _model.trail_width() + clampf(speed / 95.0, 0.0, 16.0), 0.12)
+    var lift_bonus := 10.0 if _holding_lift else 0.0
+    _trail.width = lerpf(_trail.width, _model.trail_width() + clampf(speed / 95.0, 0.0, 16.0) + lift_bonus, 0.12)
 
 
 func _update_player_feel(delta: float) -> void:
     _feel_phase += delta
     var airborne: bool = not (is_on_floor() or is_on_ceiling())
-    _model.rotation = lerpf(_model.rotation, clampf(velocity.y / _terminal_velocity, -0.22, 0.22) if airborne else 0.0, 0.12)
-    _model.scale = _model.scale.lerp(Vector2.ONE * (1.0 + sin(_feel_phase * 8.0) * 0.018), 0.08)
+    var target_rot := clampf(velocity.y / _terminal_velocity, -0.28, 0.28) if airborne else 0.0
+    _model.rotation = lerpf(_model.rotation, target_rot, 0.14)
+    var lift_pulse := 0.045 if _holding_lift else 0.018
+    _model.scale = _model.scale.lerp(Vector2.ONE * (1.0 + sin(_feel_phase * 8.0) * lift_pulse), 0.1)
+    _lift_particles.emitting = _holding_lift and _active
 
 
 func _update_idle_breath(delta: float) -> void:
@@ -324,6 +360,21 @@ func _trail_width_curve() -> Curve:
     curve.add_point(Vector2(0.18, 1.0))
     curve.add_point(Vector2(1.0, 0.0))
     return curve
+
+
+func _configure_lift_particles() -> void:
+    _lift_particles.emitting = false
+    _lift_particles.one_shot = false
+    _lift_particles.amount = 28
+    _lift_particles.lifetime = 0.42
+    _lift_particles.direction = Vector2.DOWN
+    _lift_particles.spread = 36.0
+    _lift_particles.initial_velocity_min = 120.0
+    _lift_particles.initial_velocity_max = 260.0
+    _lift_particles.gravity = Vector2(0.0, 120.0)
+    _lift_particles.scale_amount_min = 2.0
+    _lift_particles.scale_amount_max = 6.0
+    _lift_particles.color = _skin.get("trail", Color(0.0, 0.941, 1.0, 1.0))
 
 
 func _update_powerup_expiry() -> void:

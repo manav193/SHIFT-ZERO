@@ -2,6 +2,7 @@
 extends Control
 
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -11,6 +12,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _spin_btn.pressed.connect(_on_spin_pressed)
     _reload()
@@ -20,6 +22,7 @@ func _reload() -> void:
     var progression := _load_progression()
     _spin_btn.disabled = not RewardEconomy.can_spin(progression)
     _result.text = "FREE SPIN READY" if not _spin_btn.disabled else "NEXT FREE SPIN TOMORROW"
+    PremiumUI.style_tree(self)
 
 
 func _on_spin_pressed() -> void:

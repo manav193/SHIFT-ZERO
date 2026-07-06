@@ -4,6 +4,7 @@
 ## EventBus fan-out stay centralized.
 extends Control
 
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _master_slider: HSlider = $Center/V/MasterRow/MasterSlider
@@ -22,6 +23,7 @@ var _loading: bool = true
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _settings = ServiceLocator.get_service("ISettingsService")
     _master_slider.value_changed.connect(_on_master_changed)
     _haptics_toggle.toggled.connect(_on_haptics_toggled)

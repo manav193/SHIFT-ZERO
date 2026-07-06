@@ -40,3 +40,24 @@ func test_stats_defaults_include_tracked_fields():
     assert_true(stats.has("total_runs"))
     assert_true(stats.has("birds_avoided"))
     assert_true(stats.has("highest_run_level"))
+    assert_true(stats.has("total_distance"))
+    assert_true(stats.has("highest_prestige"))
+
+
+func test_endless_progression_defaults_and_collection_rows():
+    var progression := ProgressionContent.ensure_progression({})
+    var rows := ProgressionContent.collection_progress(progression)
+    assert_true(progression.has("season"))
+    assert_true(progression.has("prestige_rank"))
+    assert_true(progression.has("unlocked_cosmetics"))
+    assert_true(rows.has("Overall"))
+    assert_true(rows.has("Trails"))
+
+
+func test_season_updates_after_run():
+    var progression := ProgressionContent.ensure_progression({})
+    progression = ProgressionContent.update_season_after_run(progression, 750, 12, 300, 900)
+    assert_eq(int(progression.season.season_xp), 750)
+    assert_eq(int(progression.season.season_level), 2)
+    assert_eq(int(progression.season.best_distance), 900)
+    assert_eq(int(progression.season.season_coins), 12)

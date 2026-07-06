@@ -2,6 +2,7 @@
 extends Control
 
 const ProgressionContent := preload("res://src/core/progression_content.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -9,6 +10,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -34,6 +36,7 @@ func _reload() -> void:
     var progression: Dictionary = loaded.value.get("progression", {})
     for achievement in ProgressionContent.achievements():
         _add_row(progression, achievement)
+    PremiumUI.style_tree(_list)
 
 
 func _add_row(progression: Dictionary, achievement: Dictionary) -> void:
@@ -71,6 +74,7 @@ func _add_row(progression: Dictionary, achievement: Dictionary) -> void:
     button.pressed.connect(func() -> void: _claim(id))
     row.add_child(button)
     _list.add_child(row)
+    PremiumUI.style_tree(row)
 
 
 func _claim(id: String) -> void:

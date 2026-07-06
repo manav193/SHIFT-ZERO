@@ -28,3 +28,10 @@ func test_remote_config_overrides_defaults():
     # Remote defaults ship the same value, but the lookup path is exercised.
     var v := GameplayConfig.get_float("player_base_speed")
     assert_gt(v, 0.0)
+
+
+func test_hold_to_fly_tunables_exist():
+    GameplayConfig.attach(null)
+    assert_gt(GameplayConfig.get_float("hold_lift_force"), 0.0)
+    assert_gt(GameplayConfig.get_float("hold_lift_max_velocity"), 0.0)
+    assert_gt(GameplayConfig.get_float("hold_air_drag"), 0.0)

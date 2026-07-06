@@ -2,6 +2,8 @@
 extends Control
 
 const ProgressionContent := preload("res://src/core/progression_content.gd")
+const ProgressionRules := preload("res://src/core/progression_rules.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -9,6 +11,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -34,6 +37,9 @@ func _reload() -> void:
     var state: Dictionary = loaded.value
     var progression: Dictionary = state.get("progression", {})
     var stats: Dictionary = progression.get("player_stats", ProgressionContent.default_stats())
+    var runs := maxf(1.0, float(stats.get("total_runs", 0)))
+    var bosses_seen := maxf(1.0, float(stats.get("bosses_seen", 0)))
+    var season: Dictionary = progression.get("season", ProgressionContent.default_season())
     var rows := [
         ["Total Runs", stats.total_runs],
         ["Total Deaths", stats.total_deaths],
@@ -48,6 +54,18 @@ func _reload() -> void:
         ["Coins Collected", stats.coins_collected],
         ["Powerups Collected", stats.powerups_collected],
         ["Highest Run Level", stats.highest_run_level],
+        ["Longest Combo", stats.get("longest_combo", 0)],
+        ["Average Distance", "%d m" % int(float(stats.get("total_distance", 0)) / runs)],
+        ["Average Score", int(float(stats.get("total_score", 0)) / runs)],
+        ["Boss Success Rate", "%d%%" % int(float(stats.get("bosses_defeated", 0)) / bosses_seen * 100.0)],
+        ["Coins Per Run", "%.1f" % (float(stats.get("coins_collected", 0)) / runs)],
+        ["Powerups Per Run", "%.1f" % (float(stats.get("powerups_collected", 0)) / runs)],
+        ["Total Play Sessions", stats.get("total_play_sessions", 0)],
+        ["Highest Prestige", stats.get("highest_prestige", ProgressionRules.prestige_rank_for_level(int(progression.get("player_level", 1))))],
+        ["Total Seasons Played", stats.get("total_seasons_played", 1)],
+        ["Season Level", season.get("season_level", 1)],
+        ["Season XP", season.get("season_xp", 0)],
+        ["Season Coins", season.get("season_coins", 0)],
         ["Bosses Seen", stats.get("bosses_seen", 0)],
         ["Bosses Defeated", stats.get("bosses_defeated", 0)],
         ["Longest Boss Survival", "%ds" % int(stats.get("longest_boss_survival_s", 0))],
@@ -57,6 +75,7 @@ func _reload() -> void:
     for row in rows:
         _add_cell(str(row[0]), true)
         _add_cell(str(row[1]), false)
+    PremiumUI.style_tree(_list)
 
 
 func _add_cell(text: String, is_label: bool) -> void:

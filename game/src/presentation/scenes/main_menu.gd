@@ -4,9 +4,11 @@
 extends Control
 
 const ProgressionRules := preload("res://src/core/progression_rules.gd")
+const ProgressionContent := preload("res://src/core/progression_content.gd")
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 
 const _GAME_WORLD_PATH := "res://src/gameplay/game_world/game_world.tscn"
 const _SETTINGS_PATH := "res://src/presentation/scenes/settings.tscn"
@@ -18,6 +20,7 @@ const _THEME_GALLERY_PATH := "res://src/presentation/scenes/theme_gallery.tscn"
 const _DAILY_LOGIN_PATH := "res://src/presentation/scenes/daily_login.tscn"
 const _LUCKY_SPIN_PATH := "res://src/presentation/scenes/lucky_spin.tscn"
 const _CHESTS_PATH := "res://src/presentation/scenes/chests.tscn"
+const _COLLECTION_PATH := "res://src/presentation/scenes/collection_book.tscn"
 
 var _progression: Dictionary = {}
 var _skin: Dictionary = {}
@@ -39,6 +42,7 @@ func _ready() -> void:
         old.visible = false
     _load_progression()
     _build_screen()
+    PremiumUI.style_tree(self)
     _update_layout()
 
 
@@ -63,11 +67,11 @@ func _load_progression() -> void:
         _progression = RewardEconomy.ensure_progression({})
     else:
         save.mutate(func(state: Dictionary) -> Dictionary:
-            state["progression"] = RewardEconomy.ensure_progression(state.get("progression", {}))
+            state["progression"] = ProgressionContent.ensure_progression(state.get("progression", {}))
             return state)
         var result: Result = save.load_state()
         _progression = result.value.get("progression", {}) if result.ok else {}
-        _progression = RewardEconomy.ensure_progression(_progression)
+        _progression = ProgressionContent.ensure_progression(_progression)
     _skin = SkinCatalog.by_id(str(_progression.get("equipped_skin", SkinCatalog.CLASSIC)))
     _theme = ThemeCatalog.by_id(str(ThemeCatalog.unlocked_theme_ids(_progression).front()))
 
@@ -180,6 +184,7 @@ func _build_top_bar() -> void:
     var xp := int(_progression.get("player_xp", 0))
     var level := int(_progression.get("player_level", ProgressionRules.level_for_total_xp(xp)))
     profile_text.add_child(_label("LEVEL %d   %d/%d XP" % [level, ProgressionRules.xp_into_level(xp), ProgressionRules.required_xp_for_level(level)], 22, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    profile_text.add_child(_label(ProgressionRules.prestige_rank_for_level(level).to_upper(), 20, Color(0.0, 0.941, 1.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
     var bar := ProgressBar.new()
     bar.custom_minimum_size = Vector2(260, 18)
     bar.max_value = ProgressionRules.required_xp_for_level(level)
@@ -230,6 +235,15 @@ func _build_showcase() -> void:
     _showcase.scale = Vector2(3.0, 3.0)
     _showcase.apply_skin(_skin)
     _root.add_child(_showcase)
+    var hint := _control_hint_panel()
+    hint.anchor_left = 0.5
+    hint.anchor_right = 0.5
+    hint.offset_left = -250.0
+    hint.offset_top = 126.0
+    hint.offset_right = 250.0
+    hint.offset_bottom = 244.0
+    _root.add_child(hint)
+    _landscape_nodes.append(hint)
 
 
 func _build_reward_panels() -> void:
@@ -245,6 +259,7 @@ func _build_reward_panels() -> void:
     _root.add_child(right)
     _landscape_nodes.append(right)
     right.add_child(_daily_panel())
+    right.add_child(_season_panel())
     right.add_child(_spin_panel())
     right.add_child(_chest_panel())
 
@@ -333,6 +348,7 @@ func _build_portrait_layout() -> void:
     var start := _menu_button("START RUN", str(_theme.get("name", "NEON CITY")).to_upper(), Color(1.0, 0.74, 0.05, 1.0), _on_play_pressed, true)
     _make_portrait_card(start, 146, 38)
     v.add_child(start)
+    v.add_child(_portrait_section(_control_hint_panel(), 104.0))
 
     var nav_grid := GridContainer.new()
     nav_grid.columns = 2
@@ -350,6 +366,7 @@ func _build_portrait_layout() -> void:
         nav_grid.add_child(button)
 
     v.add_child(_portrait_reward_cards())
+    v.add_child(_portrait_section(_season_panel(), 118.0))
     v.add_child(_portrait_currency_grid())
 
     var more_btn := _menu_button("MORE", "EXTRAS", Color(0.75, 0.85, 1.0, 1.0), Callable())
@@ -389,6 +406,7 @@ func _portrait_profile_panel() -> PanelContainer:
     var xp := int(_progression.get("player_xp", 0))
     var level := int(_progression.get("player_level", ProgressionRules.level_for_total_xp(xp)))
     profile_text.add_child(_label("LEVEL %d" % level, 24, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    profile_text.add_child(_label(ProgressionRules.prestige_rank_for_level(level).to_upper(), 20, Color(0.0, 0.941, 1.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
     var bar := ProgressBar.new()
     bar.custom_minimum_size = Vector2(0, 24)
     bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -468,6 +486,7 @@ func _portrait_extras_grid() -> GridContainer:
     for button in [
         _menu_button("ACHIEVEMENTS", "CLAIM", Color(1.0, 0.58, 0.05, 1.0), _on_achievements_pressed),
         _menu_button("STATISTICS", "STATS", Color(0.0, 0.82, 0.9, 1.0), _on_statistics_pressed),
+        _menu_button("COLLECTION", "BOOK", Color(1.0, 0.933, 0.0, 1.0), _on_collection_pressed),
         _menu_button("THEMES", "%d/%d" % [ThemeCatalog.unlocked_theme_ids(_progression).size(), ThemeCatalog.all().size()], Color(0.2, 1.0, 0.38, 1.0), _on_theme_gallery_pressed),
         _menu_button("SETTINGS", "A11Y", Color(0.75, 0.85, 1.0, 1.0), _on_settings_pressed),
         _menu_button("QUIT", "EXIT", Color(0.55, 0.62, 0.72, 1.0), _on_quit_pressed),
@@ -477,8 +496,8 @@ func _portrait_extras_grid() -> GridContainer:
     return grid
 
 
-func _portrait_section(panel: Control) -> Control:
-    panel.custom_minimum_size = Vector2(0, 164)
+func _portrait_section(panel: Control, height: float = 164.0) -> Control:
+    panel.custom_minimum_size = Vector2(0, height)
     panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     return panel
 
@@ -505,6 +524,18 @@ func _daily_panel() -> Control:
         else:
             cell.modulate = Color(0.65, 0.7, 0.8, 0.85)
         row.add_child(cell)
+    return p
+
+
+func _season_panel() -> Control:
+    var season: Dictionary = _progression.get("season", ProgressionContent.default_season())
+    var p := _reward_panel("SEASON", "LV %d  %d XP" % [int(season.get("season_level", 1)), int(season.get("season_xp", 0))], _on_statistics_pressed)
+    var bar := ProgressBar.new()
+    bar.custom_minimum_size = Vector2(0, 20)
+    bar.max_value = 500.0
+    bar.value = int(season.get("season_xp", 0)) % 500
+    bar.show_percentage = false
+    p.add_child(bar)
     return p
 
 
@@ -553,6 +584,20 @@ func _reward_panel(title: String, sub: String, callback: Callable) -> PanelConta
     v.add_child(b)
     _wire_button(b)
     v.add_child(_label(sub, 20, Color(1.0, 0.62, 1.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    return p
+
+
+func _control_hint_panel() -> PanelContainer:
+    var p := _panel(Color(0.01, 0.018, 0.045, 0.74), Color(0.0, 0.941, 1.0, 0.82))
+    p.custom_minimum_size = Vector2(0, 96)
+    var row := HBoxContainer.new()
+    row.alignment = BoxContainer.ALIGNMENT_CENTER
+    row.add_theme_constant_override("separation", 18)
+    p.add_child(row)
+    row.add_child(_label("HOLD", 28, Color.WHITE))
+    row.add_child(_label("UP", 38, Color(0.0, 0.941, 1.0, 1.0)))
+    row.add_child(_label("  RELEASE", 28, Color.WHITE))
+    row.add_child(_label("DOWN", 38, Color(1.0, 0.169, 0.839, 1.0)))
     return p
 
 
@@ -814,6 +859,10 @@ func _on_achievements_pressed() -> void:
 
 func _on_statistics_pressed() -> void:
     _push(_STATISTICS_PATH, "statistics")
+
+
+func _on_collection_pressed() -> void:
+    _push(_COLLECTION_PATH, "collection")
 
 
 func _on_theme_gallery_pressed() -> void:

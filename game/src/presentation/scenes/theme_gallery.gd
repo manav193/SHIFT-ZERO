@@ -4,6 +4,7 @@
 extends Control
 
 const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
@@ -27,6 +28,7 @@ var _unlocked: Array = []
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _load_unlocks()
     _populate()
@@ -63,6 +65,7 @@ func _populate() -> void:
         row.modulate = Color.WHITE if owned else Color(0.58, 0.62, 0.68, 1.0)
         row.pressed.connect(func() -> void: _show_theme(theme))
         _list.add_child(row)
+        PremiumUI.style_button(row, theme.get("light", Color(0.0, 0.941, 1.0, 1.0)))
 
 
 func _show_theme(theme: Dictionary) -> void:

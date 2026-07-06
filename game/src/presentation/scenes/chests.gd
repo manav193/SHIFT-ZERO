@@ -2,6 +2,7 @@
 extends Control
 
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -11,6 +12,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -29,6 +31,7 @@ func _reload() -> void:
         button.disabled = int(chests.get(chest_id, 0)) <= 0
         button.pressed.connect(func() -> void: _open_chest(chest_id))
         _chest_list.add_child(button)
+        PremiumUI.style_button(button, Color(1.0, 0.76, 0.05, 1.0))
     var boosters: Dictionary = progression.get("booster_inventory", {})
     var equipped: Array = progression.get("equipped_boosters", [])
     for booster_id in RewardEconomy.BOOSTERS:
@@ -39,6 +42,7 @@ func _reload() -> void:
         button.disabled = int(boosters.get(booster_id, 0)) <= 0 and not is_equipped
         button.pressed.connect(func() -> void: _toggle_booster(booster_id, not is_equipped))
         _booster_list.add_child(button)
+        PremiumUI.style_button(button, Color(0.0, 0.941, 1.0, 1.0))
 
 
 func _open_chest(chest_id: String) -> void:

@@ -7,6 +7,11 @@ const ProgressionRules := preload("res://src/core/progression_rules.gd")
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 const BossCatalog := preload("res://src/core/boss_catalog.gd")
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
+
+const TRAILS := ["neon_dash", "ember_stream", "frost_line", "void_mist", "circuit_path", "royal_spark"]
+const EFFECTS := ["flip_ring", "death_burst", "spawn_flash", "landing_wave", "boss_aura", "zero_echo"]
+const BADGES := ["rookie", "veteran", "bossbreaker", "collector", "seasoned", "shift_zero"]
 
 
 static func today_key() -> String:
@@ -31,6 +36,13 @@ static func default_stats() -> Dictionary:
         "bosses_defeated": 0,
         "longest_boss_survival_s": 0,
         "boss_no_damage_defeats": 0,
+        "longest_combo": 0,
+        "total_distance": 0,
+        "total_score": 0,
+        "boss_attempts": 0,
+        "total_play_sessions": 0,
+        "highest_prestige": "",
+        "total_seasons_played": 1,
     }
 
 
@@ -39,12 +51,27 @@ static func ensure_progression(progression: Dictionary) -> Dictionary:
         progression["player_xp"] = 0
     if not progression.has("player_level"):
         progression["player_level"] = ProgressionRules.level_for_total_xp(int(progression.get("player_xp", 0)))
+    progression["prestige_rank"] = ProgressionRules.prestige_rank_for_level(int(progression.get("player_level", 1)))
+    if not progression.has("season"):
+        progression["season"] = default_season()
+    else:
+        var season_defaults := default_season()
+        var season: Dictionary = progression["season"]
+        for key in season_defaults.keys():
+            if not season.has(key):
+                season[key] = season_defaults[key]
+        progression["season"] = season
     if not progression.has("daily"):
         progression["daily"] = {"last_refresh_date": "", "missions": []}
     if not progression.has("achievements_unlocked"):
         progression["achievements_unlocked"] = []
     if not progression.has("achievement_rewards_claimed"):
         progression["achievement_rewards_claimed"] = []
+    if not progression.has("unlocked_cosmetics"):
+        progression["unlocked_cosmetics"] = []
+    if not progression.has("equipped_cosmetics"):
+        progression["equipped_cosmetics"] = {}
+    progression = unlock_level_cosmetics(progression)
     progression = BossCatalog.ensure_progression(progression)
     progression = RewardEconomy.ensure_progression(progression)
     if not progression.has("player_stats"):
@@ -57,6 +84,97 @@ static func ensure_progression(progression: Dictionary) -> Dictionary:
                 stats[key] = defaults[key]
         progression["player_stats"] = stats
     return progression
+
+
+static func default_season() -> Dictionary:
+    return {
+        "id": _season_id(),
+        "season_xp": 0,
+        "season_level": 1,
+        "best_score": 0,
+        "best_distance": 0,
+        "season_coins": 0,
+    }
+
+
+static func season_level_for_xp(season_xp: int) -> int:
+    return int(maxi(0, season_xp) / 500) + 1
+
+
+static func update_season_after_run(progression: Dictionary, xp_earned: int, coins: int, score: int, distance_m: int) -> Dictionary:
+    progression = ensure_progression(progression)
+    var season: Dictionary = progression.get("season", default_season())
+    season["season_xp"] = int(season.get("season_xp", 0)) + maxi(0, xp_earned)
+    season["season_level"] = season_level_for_xp(int(season.get("season_xp", 0)))
+    season["best_score"] = maxi(int(season.get("best_score", 0)), score)
+    season["best_distance"] = maxi(int(season.get("best_distance", 0)), distance_m)
+    season["season_coins"] = int(season.get("season_coins", 0)) + maxi(0, coins)
+    progression["season"] = season
+    return progression
+
+
+static func unlock_level_cosmetics(progression: Dictionary) -> Dictionary:
+    var unlocked: Array = progression.get("unlocked_cosmetics", [])
+    var level := int(progression.get("player_level", 1))
+    var pools := [TRAILS, EFFECTS, BADGES]
+    for i in int(level / 3):
+        var pool: Array = pools[i % pools.size()]
+        var id := str(pool[i % pool.size()])
+        if not unlocked.has(id):
+            unlocked.append(id)
+    progression["unlocked_cosmetics"] = unlocked
+    return progression
+
+
+static func milestone_reward_for_level(level: int) -> Dictionary:
+    if level <= 0 or level % 5 != 0:
+        return {}
+    var chest := "rare" if level % 20 == 0 else "common"
+    return {
+        "coins": 150 + level * 20,
+        "xp": 100 + level * 15,
+        "boosters": {"xp_booster": 1},
+        "chests": {chest: 1},
+        "fragments": {"dragon": maxi(1, level / 10)},
+    }
+
+
+static func apply_level_milestones(progression: Dictionary, old_level: int, new_level: int) -> Dictionary:
+    progression = ensure_progression(progression)
+    for level in range(old_level + 1, new_level + 1):
+        var reward := milestone_reward_for_level(level)
+        if reward.is_empty():
+            continue
+        progression = RewardEconomy.apply_reward(progression, reward)
+        var pending: Array = progression.get("pending_rewards", [])
+        pending.append({"source": "Level %d Milestone" % level, "reward": reward, "t_ms": Time.get_ticks_msec()})
+        progression["pending_rewards"] = pending
+    return unlock_level_cosmetics(progression)
+
+
+static func collection_progress(progression: Dictionary) -> Dictionary:
+    progression = ensure_progression(progression)
+    var skins_owned := (progression.get("purchased_skins", []) as Array).size()
+    var themes_owned := ThemeCatalog.unlocked_theme_ids(progression).size()
+    var bosses_seen := (progression.get("bosses_seen", []) as Array).size()
+    var achievements_owned := (progression.get("achievements_unlocked", []) as Array).size()
+    var cosmetics := progression.get("unlocked_cosmetics", []) as Array
+    var rows := {
+        "Skins": {"owned": skins_owned, "total": SkinCatalog.all().size()},
+        "Themes": {"owned": themes_owned, "total": ThemeCatalog.all().size()},
+        "Bosses": {"owned": bosses_seen, "total": BossCatalog.all().size()},
+        "Achievements": {"owned": achievements_owned, "total": achievements().size()},
+        "Trails": {"owned": _count_owned(cosmetics, TRAILS), "total": TRAILS.size()},
+        "Effects": {"owned": _count_owned(cosmetics, EFFECTS), "total": EFFECTS.size()},
+        "Badges": {"owned": _count_owned(cosmetics, BADGES), "total": BADGES.size()},
+    }
+    var owned_total := 0
+    var total := 0
+    for row in rows.values():
+        owned_total += int(row.owned)
+        total += int(row.total)
+    rows["Overall"] = {"owned": owned_total, "total": total}
+    return rows
 
 
 static func generate_daily(date_key: String) -> Dictionary:
@@ -186,6 +304,19 @@ static func achievement_progress(progression: Dictionary, achievement: Dictionar
             return 1 if (progression.get("bosses_defeated", []) as Array).has(str(achievement.get("target", ""))) else 0
         _:
             return int(stats.get(kind, 0))
+
+
+static func _count_owned(owned: Array, pool: Array) -> int:
+    var count := 0
+    for id in pool:
+        if owned.has(id):
+            count += 1
+    return count
+
+
+static func _season_id() -> String:
+    var d := Time.get_date_dict_from_system()
+    return "%04d-S%02d" % [int(d.year), int((int(d.month) - 1) / 3) + 1]
 
 
 static func apply_reward(progression: Dictionary, reward: Dictionary) -> Dictionary:

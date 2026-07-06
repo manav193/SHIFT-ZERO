@@ -2,6 +2,7 @@
 extends Control
 
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -11,6 +12,7 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
+    PremiumUI.apply_screen(self)
     _back_btn.pressed.connect(_on_back_pressed)
     _claim_btn.pressed.connect(_on_claim_pressed)
     _reload()
@@ -32,6 +34,7 @@ func _reload() -> void:
         row.add_theme_font_size_override("font_size", 30)
         row.add_theme_color_override("font_color", Color(1.0, 0.933, 0.0, 1.0) if int(entry.day) == day else Color(0.75, 0.85, 0.9, 1.0))
         _list.add_child(row)
+    PremiumUI.style_tree(_list)
 
 
 func _on_claim_pressed() -> void:

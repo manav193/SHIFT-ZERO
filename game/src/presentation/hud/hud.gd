@@ -21,6 +21,7 @@ const ProgressionRules := preload("res://src/core/progression_rules.gd")
 const ProgressionContent := preload("res://src/core/progression_content.gd")
 const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
+const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 
 @export var run_director: NodePath
 @export var modifier_manager: NodePath
@@ -80,6 +81,7 @@ var _xp_reward_mult: int = 1
 
 
 func _ready() -> void:
+    PremiumUI.style_tree(self)
     _director = get_node_or_null(run_director)
     _mod_mgr = get_node_or_null(modifier_manager)
     _pause_modal.visible = false
@@ -118,7 +120,7 @@ func _ready() -> void:
     _score_label.text = "0"
     _distance_label.text = "0 m"
     _coins_label.text = "COINS 0"
-    _player_level_label.text = "LV %d" % _player_level
+    _player_level_label.text = "LV %d  %s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper()]
     _update_run_level(0)
     _make_flash()
     _apply_responsive_layout()
@@ -199,7 +201,7 @@ func _on_run_finished(_payload: Dictionary) -> void:
     _persist_run_coins()
     var xp_earned := ProgressionRules.run_xp(distance_m, _run_coins, _run_powerups, current) * _xp_reward_mult
     var leveled := _persist_run_xp(xp_earned)
-    _persist_run_stats(distance_m, current)
+    _persist_run_stats(distance_m, current, xp_earned, _run_coins * _coin_reward_mult)
     if new_best:
         _best_score = current
         _persist_best_score(_best_score, distance)
@@ -209,12 +211,14 @@ func _on_run_finished(_payload: Dictionary) -> void:
     _go_distance.text = "DISTANCE %d m" % distance_m
     _go_coins.text = "COINS +%d  TOTAL %d" % [_run_coins * _coin_reward_mult, _total_coins]
     _go_xp.text = "XP +%d" % xp_earned
-    _go_level.text = "LEVEL %d%s" % [_player_level, "  LEVEL UP!" if leveled else ""]
+    _go_level.text = "LEVEL %d  %s%s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper(), "  LEVEL UP!" if leveled else ""]
     _update_level_bar()
     _go_modal.visible = true
     _animate_modal(_go_panel)
     _go_dim.modulate.a = 0.0
     create_tween().tween_property(_go_dim, "modulate:a", 1.0, 0.18)
+    if leveled:
+        _show_recent_level_reward()
     _modifier_badge.visible = false
 
 
@@ -269,7 +273,7 @@ func _on_boss_defeated(payload: Dictionary) -> void:
     tween.tween_callback(func() -> void: _boss_defeated.visible = false)
     _load_saved_progress()
     _coins_label.text = "COINS %d" % _run_coins
-    _player_level_label.text = "LV %d" % _player_level
+    _player_level_label.text = "LV %d  %s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper()]
 
 
 func _on_boss_failed(_payload: Dictionary) -> void:
@@ -372,7 +376,7 @@ func _persist_run_coins() -> void:
         _total_coins += coins_to_add
 
 
-func _persist_run_stats(distance_m: int, score: int) -> void:
+func _persist_run_stats(distance_m: int, score: int, xp_earned: int, coins_earned: int) -> void:
     var save: Object = ServiceLocator.get_service("ISaveService")
     if save == null:
         return
@@ -391,6 +395,12 @@ func _persist_run_stats(distance_m: int, score: int) -> void:
         stats["coins_collected"] = int(stats.get("coins_collected", 0)) + _run_coins
         stats["powerups_collected"] = int(stats.get("powerups_collected", 0)) + _run_powerups
         stats["highest_run_level"] = maxi(int(stats.get("highest_run_level", 1)), _last_run_level)
+        stats["longest_combo"] = maxi(int(stats.get("longest_combo", 0)), _run_obstacles_avoided)
+        stats["total_distance"] = int(stats.get("total_distance", 0)) + distance_m
+        stats["total_score"] = int(stats.get("total_score", 0)) + score
+        stats["boss_attempts"] = int(stats.get("boss_attempts", 0)) + int(stats.get("bosses_seen", 0))
+        stats["highest_prestige"] = ProgressionRules.prestige_rank_for_level(int(progression.get("player_level", 1)))
+        stats["total_seasons_played"] = maxi(1, int(stats.get("total_seasons_played", 1)))
         progression["player_stats"] = stats
         var run := {
             "coins": _run_coins,
@@ -403,6 +413,7 @@ func _persist_run_stats(distance_m: int, score: int) -> void:
         progression = ProgressionContent.update_daily_progress(progression, ProgressionContent.daily_counters(stats, run, progression))
         progression = ProgressionContent.update_achievements(progression)
         progression = ThemeCatalog.unlock_available(progression)
+        progression = ProgressionContent.update_season_after_run(progression, xp_earned, coins_earned, score, distance_m)
         state["progression"] = progression
         return state)
 
@@ -420,18 +431,51 @@ func _persist_run_xp(xp_earned: int) -> bool:
         var progression: Dictionary = state.get("progression", {})
         var next_xp := int(progression.get("player_xp", 0)) + xp_earned
         progression["player_xp"] = next_xp
-        progression["player_level"] = ProgressionRules.level_for_total_xp(next_xp)
+        var next_level := ProgressionRules.level_for_total_xp(next_xp)
+        progression["player_level"] = next_level
+        progression["prestige_rank"] = ProgressionRules.prestige_rank_for_level(next_level)
+        progression = ProgressionContent.apply_level_milestones(progression, old_level, next_level)
         state["progression"] = progression
         return state)
     if not result.ok:
         return false
     _player_xp += xp_earned
     _player_level = ProgressionRules.level_for_total_xp(_player_xp)
-    _player_level_label.text = "LV %d" % _player_level
+    _player_level_label.text = "LV %d  %s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper()]
     var leveled := _player_level > old_level
     if leveled:
         EventBus.emit(Events.PLAYER_LEVEL_UP, {"level": _player_level, "xp": _player_xp})
     return leveled
+
+
+func _show_recent_level_reward() -> void:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    var loaded: Result = save.load_state()
+    if not loaded.ok:
+        return
+    var progression: Dictionary = loaded.value.get("progression", {})
+    var pending: Array = progression.get("pending_rewards", [])
+    var now := Time.get_ticks_msec()
+    for i in range(pending.size() - 1, -1, -1):
+        var entry: Dictionary = pending[i]
+        if not str(entry.get("source", "")).begins_with("Level "):
+            continue
+        if abs(now - int(entry.get("t_ms", 0))) > 5000:
+            continue
+        _boss_defeated.text = "MILESTONE REWARD\n%s\n%s" % [str(entry.get("source", "")).to_upper(), RewardEconomy.reward_text(entry.get("reward", {})).to_upper()]
+        _boss_defeated.visible = true
+        _boss_defeated.modulate.a = 1.0
+        _boss_defeated.scale = Vector2(0.88, 0.88)
+        var tween := create_tween()
+        tween.set_trans(Tween.TRANS_BACK)
+        tween.set_ease(Tween.EASE_OUT)
+        tween.tween_property(_boss_defeated, "scale", Vector2.ONE, 0.18)
+        tween.tween_interval(1.8)
+        tween.tween_property(_boss_defeated, "modulate:a", 0.0, 0.25)
+        tween.tween_callback(func() -> void: _boss_defeated.visible = false)
+        return
 
 
 func _update_level_bar() -> void:

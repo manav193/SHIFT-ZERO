@@ -27,3 +27,10 @@ func test_run_level_by_distance():
     assert_eq(ProgressionRules.run_level_for_distance_m(1500).name, "Hard")
     assert_eq(ProgressionRules.run_level_for_distance_m(3000).name, "Extreme")
     assert_eq(ProgressionRules.run_level_for_distance_m(6000).name, "SHIFT ZERO")
+
+
+func test_prestige_rank_continues_after_level_50():
+    assert_eq(ProgressionRules.prestige_rank_for_level(50), "LEVEL 50")
+    assert_eq(ProgressionRules.prestige_rank_for_level(51), "Bronze I")
+    assert_eq(ProgressionRules.prestige_rank_for_level(56), "Silver I")
+    assert_eq(ProgressionRules.prestige_rank_for_level(78), "SHIFT ZERO")
