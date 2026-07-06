@@ -5,7 +5,7 @@
 class_name BossCatalog
 extends RefCounted
 
-const ProgressionRules := preload("res://src/core/progression_rules.gd")
+const RewardEconomy := preload("res://src/core/reward_economy.gd")
 
 const SKY_HUNTER := "sky_hunter"
 const LASER_WALL := "laser_wall"
@@ -20,7 +20,7 @@ static func all() -> Array:
             "name": "Sky Hunter",
             "distance_m": 5000,
             "duration_s": 24.0,
-            "reward": {"coins": 180, "xp": 320, "rare_chest_chance": 0.08},
+            "reward": {"coins": 180, "xp": 320, "rare_chest_chance": 0.08, "fragments": {"dragon": 2}},
             "color": Color(0.0, 0.941, 1.0, 1.0),
         },
         {
@@ -28,7 +28,7 @@ static func all() -> Array:
             "name": "Laser Wall",
             "distance_m": 10000,
             "duration_s": 26.0,
-            "reward": {"coins": 240, "xp": 420, "rare_chest_chance": 0.10},
+            "reward": {"coins": 240, "xp": 420, "rare_chest_chance": 0.10, "fragments": {"dragon": 3}},
             "color": Color(1.0, 0.169, 0.839, 1.0),
         },
         {
@@ -36,7 +36,7 @@ static func all() -> Array:
             "name": "Meteor Storm",
             "distance_m": 15000,
             "duration_s": 30.0,
-            "reward": {"coins": 320, "xp": 560, "rare_chest_chance": 0.12},
+            "reward": {"coins": 320, "xp": 560, "rare_chest_chance": 0.12, "fragments": {"dragon": 4, "phoenix": 2}},
             "color": Color(1.0, 0.42, 0.04, 1.0),
         },
         {
@@ -44,7 +44,7 @@ static func all() -> Array:
             "name": "Gravity Storm",
             "distance_m": 20000,
             "duration_s": 32.0,
-            "reward": {"coins": 420, "xp": 720, "rare_chest_chance": 0.15},
+            "reward": {"coins": 420, "xp": 720, "rare_chest_chance": 0.15, "fragments": {"dragon": 5, "phoenix": 3}},
             "color": Color(0.58, 0.38, 1.0, 1.0),
         },
     ]
@@ -96,6 +96,7 @@ static func ensure_progression(progression: Dictionary) -> Dictionary:
         progression["bosses_defeated"] = []
     if not progression.has("rare_chests"):
         progression["rare_chests"] = 0
+    progression = RewardEconomy.ensure_progression(progression)
     var stats: Dictionary = progression.get("player_stats", {})
     for key in default_stats_patch().keys():
         if not stats.has(key):
@@ -124,10 +125,7 @@ static func apply_boss_defeat(progression: Dictionary, boss_id: String, survived
     progression["bosses_defeated"] = defeated
     var boss := by_id(boss_id)
     var reward: Dictionary = boss.get("reward", {})
-    progression["total_coins"] = int(progression.get("total_coins", 0)) + int(reward.get("coins", 0))
-    var xp := int(progression.get("player_xp", 0)) + int(reward.get("xp", 0))
-    progression["player_xp"] = xp
-    progression["player_level"] = ProgressionRules.level_for_total_xp(xp)
+    progression = RewardEconomy.apply_reward(progression, reward)
     if float(reward.get("rare_chest_chance", 0.0)) >= 0.1:
         progression["rare_chests"] = int(progression.get("rare_chests", 0)) + 1
     var stats: Dictionary = progression.get("player_stats", {})

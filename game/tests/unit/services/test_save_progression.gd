@@ -31,6 +31,13 @@ func test_default_progression_includes_total_coins():
     assert_true(progression.player_stats.has("bosses_seen"))
     assert_true(progression.player_stats.has("bosses_defeated"))
     assert_true(progression.player_stats.has("longest_boss_survival_s"))
+    assert_true(progression.has("daily_login"))
+    assert_true(progression.has("lucky_spin"))
+    assert_true(progression.has("chest_inventory"))
+    assert_true(progression.has("booster_inventory"))
+    assert_true(progression.has("equipped_boosters"))
+    assert_true(progression.has("skin_fragments"))
+    assert_true(progression.has("pending_rewards"))
 
 
 func test_total_coins_can_be_incremented():

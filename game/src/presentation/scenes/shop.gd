@@ -4,6 +4,7 @@
 extends Control
 
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
+const RewardEconomy := preload("res://src/core/reward_economy.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
@@ -24,6 +25,7 @@ var _equipped: String = SkinCatalog.CLASSIC
 var _selected: String = SkinCatalog.CLASSIC
 var _row_buttons: Dictionary = {}
 var _preview_tween: Tween
+var _fragments: Dictionary = {}
 
 
 func _ready() -> void:
@@ -53,6 +55,12 @@ func _on_action_pressed() -> void:
     if _is_owned(_selected):
         _equip_skin(_selected)
         return
+    var fragment_need := RewardEconomy.fragment_requirement(_selected)
+    if fragment_need > 0:
+        if int(_fragments.get(_selected, 0)) < fragment_need:
+            return
+        _purchase_skin_with_fragments(_selected, fragment_need)
+        return
     var cost := int(skin.cost)
     if _total_coins < cost:
         return
@@ -71,6 +79,7 @@ func _load_progression() -> void:
     var state: Dictionary = result.value
     var progression: Dictionary = state.get("progression", {})
     _total_coins = int(progression.get("total_coins", 0))
+    _fragments = progression.get("skin_fragments", {})
     _purchased = progression.get("purchased_skins", SkinCatalog.default_unlocked())
     if not _purchased.has(SkinCatalog.CLASSIC):
         _purchased.append(SkinCatalog.CLASSIC)
@@ -111,7 +120,7 @@ func _select_skin(id: String) -> void:
     _preview_state.text = _state_text(skin)
     _preview_effects.text = _effects_text(skin)
     _action_btn.text = _action_text(skin)
-    _action_btn.disabled = not _is_owned(id) and _total_coins < int(skin.cost)
+    _action_btn.disabled = _action_disabled(skin)
     _animate_preview(skin)
 
 
@@ -127,6 +136,31 @@ func _purchase_skin(id: String, cost: int) -> void:
             coins -= cost
             owned.append(id)
         progression["total_coins"] = coins
+        progression["purchased_skins"] = owned
+        progression["equipped_skin"] = id
+        state["progression"] = progression
+        return state)
+    if not result.ok:
+        return
+    _load_progression()
+    _selected = id
+    _equipped = id
+    _build_skin_list()
+    _select_skin(id)
+
+
+func _purchase_skin_with_fragments(id: String, cost: int) -> void:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    var result: Result = save.mutate(func(state: Dictionary) -> Dictionary:
+        var progression: Dictionary = RewardEconomy.ensure_progression(state.get("progression", {}))
+        var owned: Array = progression.get("purchased_skins", SkinCatalog.default_unlocked())
+        var fragments: Dictionary = progression.get("skin_fragments", {})
+        if int(fragments.get(id, 0)) >= cost and not owned.has(id):
+            fragments[id] = int(fragments.get(id, 0)) - cost
+            owned.append(id)
+        progression["skin_fragments"] = fragments
         progression["purchased_skins"] = owned
         progression["equipped_skin"] = id
         state["progression"] = progression
@@ -164,7 +198,9 @@ func _is_owned(id: String) -> bool:
 
 func _row_text(skin: Dictionary) -> String:
     var id := str(skin.id)
-    var status := "EQUIPPED" if id == _equipped else ("OWNED" if _is_owned(id) else "%d COINS" % int(skin.cost))
+    var fragment_need := RewardEconomy.fragment_requirement(id)
+    var price := "%d FRAGS" % fragment_need if fragment_need > 0 else "%d COINS" % int(skin.cost)
+    var status := "EQUIPPED" if id == _equipped else ("OWNED" if _is_owned(id) else price)
     return "%s    %s" % [str(skin.name), status]
 
 
@@ -174,6 +210,9 @@ func _state_text(skin: Dictionary) -> String:
         return "EQUIPPED"
     if _is_owned(id):
         return "OWNED"
+    var fragment_need := RewardEconomy.fragment_requirement(id)
+    if fragment_need > 0:
+        return "LOCKED  %d/%d FRAGMENTS" % [int(_fragments.get(id, 0)), fragment_need]
     return "LOCKED  %d COINS" % int(skin.cost)
 
 
@@ -183,9 +222,23 @@ func _action_text(skin: Dictionary) -> String:
         return "EQUIPPED"
     if _is_owned(id):
         return "EQUIP"
+    var fragment_need := RewardEconomy.fragment_requirement(id)
+    if fragment_need > 0:
+        var have := int(_fragments.get(id, 0))
+        return "UNLOCK" if have >= fragment_need else "NEED %d FRAGS" % (fragment_need - have)
     if _total_coins < int(skin.cost):
         return "NEED %d" % (int(skin.cost) - _total_coins)
     return "PURCHASE"
+
+
+func _action_disabled(skin: Dictionary) -> bool:
+    var id := str(skin.id)
+    if _is_owned(id):
+        return false
+    var fragment_need := RewardEconomy.fragment_requirement(id)
+    if fragment_need > 0:
+        return int(_fragments.get(id, 0)) < fragment_need
+    return _total_coins < int(skin.cost)
 
 
 func _effects_text(skin: Dictionary) -> String:

@@ -18,6 +18,7 @@ extends CharacterBody2D
 const Events := preload("res://src/core/events.gd")
 const GameplayConfig := preload("res://src/gameplay/gameplay_config.gd")
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
+const RewardEconomy := preload("res://src/core/reward_economy.gd")
 
 @export var difficulty: NodePath
 
@@ -208,6 +209,7 @@ func _on_run_started(_payload: Dictionary) -> void:
     _magnet_announced_expired = true
     _double_score_announced_expired = true
     _trail.clear_points()
+    _consume_pre_run_boosters()
     print("Player", "activated")
 
 
@@ -320,3 +322,25 @@ func _play_land_juice() -> void:
 func _reset_visual_tween() -> void:
     if _visual_tween != null and _visual_tween.is_valid():
         _visual_tween.kill()
+
+
+func _consume_pre_run_boosters() -> void:
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    var active_boosters: Array = []
+    var result: Result = save.mutate(func(state: Dictionary) -> Dictionary:
+        var progression: Dictionary = RewardEconomy.consume_equipped_boosters(state.get("progression", {}))
+        active_boosters = progression.get("active_run_boosters", [])
+        state["progression"] = progression
+        return state)
+    if not result.ok:
+        return
+    for booster in active_boosters:
+        match str(booster):
+            "shield":
+                apply_powerup("shield", 0.0)
+            "magnet":
+                apply_powerup("magnet", 8.0)
+            "double_score":
+                apply_powerup("double_score", 8.0)

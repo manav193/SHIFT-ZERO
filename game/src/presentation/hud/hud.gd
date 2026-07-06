@@ -20,6 +20,7 @@ const Events := preload("res://src/core/events.gd")
 const ProgressionRules := preload("res://src/core/progression_rules.gd")
 const ProgressionContent := preload("res://src/core/progression_content.gd")
 const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
+const RewardEconomy := preload("res://src/core/reward_economy.gd")
 
 @export var run_director: NodePath
 @export var modifier_manager: NodePath
@@ -73,6 +74,8 @@ var _player_xp: int = 0
 var _player_level: int = 1
 var _last_run_level: int = 1
 var _active_powerups: Dictionary = {}
+var _coin_reward_mult: int = 1
+var _xp_reward_mult: int = 1
 
 
 func _ready() -> void:
@@ -187,7 +190,7 @@ func _on_run_finished(_payload: Dictionary) -> void:
     var distance_m := int(distance / 100.0)
     var new_best: bool = current > _best_score
     _persist_run_coins()
-    var xp_earned := ProgressionRules.run_xp(distance_m, _run_coins, _run_powerups, current)
+    var xp_earned := ProgressionRules.run_xp(distance_m, _run_coins, _run_powerups, current) * _xp_reward_mult
     var leveled := _persist_run_xp(xp_earned)
     _persist_run_stats(distance_m, current)
     if new_best:
@@ -197,7 +200,7 @@ func _on_run_finished(_payload: Dictionary) -> void:
     _go_score.text = "SCORE %d" % current
     _go_best.text = "BEST %d%s" % [_best_score, "  NEW!" if new_best else ""]
     _go_distance.text = "DISTANCE %d m" % distance_m
-    _go_coins.text = "COINS +%d  TOTAL %d" % [_run_coins, _total_coins]
+    _go_coins.text = "COINS +%d  TOTAL %d" % [_run_coins * _coin_reward_mult, _total_coins]
     _go_xp.text = "XP +%d" % xp_earned
     _go_level.text = "LEVEL %d%s" % [_player_level, "  LEVEL UP!" if leveled else ""]
     _update_level_bar()
@@ -284,6 +287,7 @@ func _on_run_started(_payload: Dictionary) -> void:
     _run_obstacles_avoided = 0
     _run_birds_avoided = 0
     _run_started_ms = Time.get_ticks_msec()
+    _load_run_boosters()
 
 
 func _on_gravity_flipped(_payload: Dictionary) -> void:
@@ -347,17 +351,18 @@ func _persist_best_score(score: int, distance: int) -> void:
 func _persist_run_coins() -> void:
     if _run_coins <= 0:
         return
+    var coins_to_add := _run_coins * _coin_reward_mult
     var save: Object = ServiceLocator.get_service("ISaveService")
     if save == null:
-        _total_coins += _run_coins
+        _total_coins += coins_to_add
         return
     var result: Result = save.mutate(func(state: Dictionary) -> Dictionary:
         var progression: Dictionary = state.get("progression", {})
-        progression["total_coins"] = int(progression.get("total_coins", 0)) + _run_coins
+        progression["total_coins"] = int(progression.get("total_coins", 0)) + coins_to_add
         state["progression"] = progression
         return state)
     if result.ok:
-        _total_coins += _run_coins
+        _total_coins += coins_to_add
 
 
 func _persist_run_stats(distance_m: int, score: int) -> void:
@@ -516,3 +521,19 @@ func _button_to(button: Button, target_scale: Vector2, duration: float) -> void:
     tween.set_trans(Tween.TRANS_QUAD)
     tween.set_ease(Tween.EASE_OUT)
     tween.tween_property(button, "scale", target_scale, duration)
+
+
+func _load_run_boosters() -> void:
+    _coin_reward_mult = 1
+    _xp_reward_mult = 1
+    var save: Object = ServiceLocator.get_service("ISaveService")
+    if save == null:
+        return
+    var loaded: Result = save.load_state()
+    if not loaded.ok:
+        return
+    var state: Dictionary = loaded.value
+    var progression: Dictionary = RewardEconomy.ensure_progression(state.get("progression", {}))
+    var active: Array = progression.get("active_run_boosters", [])
+    _coin_reward_mult = 2 if active.has("coin_booster") else 1
+    _xp_reward_mult = 2 if active.has("xp_booster") else 1

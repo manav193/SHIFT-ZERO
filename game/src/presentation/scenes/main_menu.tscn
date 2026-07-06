@@ -20,13 +20,13 @@ anchor_bottom = 1.0
 
 [node name="V" type="VBoxContainer" parent="Center"]
 custom_minimum_size = Vector2(620, 0)
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="Title" type="Label" parent="Center/V"]
 text = "SHIFT // ZERO"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 64
+theme_override_font_sizes/font_size = 56
 theme_override_colors/font_color = Color(0, 0.941, 1, 1)
 
 [node name="Sub" type="Label" parent="Center/V"]
@@ -36,7 +36,7 @@ theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
 
 [node name="Spacer" type="Control" parent="Center/V"]
-custom_minimum_size = Vector2(0, 12)
+custom_minimum_size = Vector2(0, 4)
 
 [node name="Coins" type="Label" parent="Center/V"]
 text = "TOTAL COINS 0"
@@ -51,41 +51,56 @@ theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0, 0.941, 1, 1)
 
 [node name="PlayBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "PLAY"
 theme_override_font_sizes/font_size = 34
 
 [node name="ShopBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "SHOP"
 theme_override_font_sizes/font_size = 34
 
+[node name="DailyLoginBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 68)
+text = "DAILY LOGIN"
+theme_override_font_sizes/font_size = 34
+
+[node name="LuckySpinBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 68)
+text = "LUCKY SPIN"
+theme_override_font_sizes/font_size = 34
+
+[node name="ChestsBtn" type="Button" parent="Center/V"]
+custom_minimum_size = Vector2(0, 68)
+text = "CHESTS"
+theme_override_font_sizes/font_size = 34
+
 [node name="DailyBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "DAILY MISSIONS"
 theme_override_font_sizes/font_size = 34
 
 [node name="AchievementsBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "ACHIEVEMENTS"
 theme_override_font_sizes/font_size = 34
 
 [node name="StatisticsBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "STATISTICS"
 theme_override_font_sizes/font_size = 34
 
 [node name="ThemeGalleryBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "THEME GALLERY"
 theme_override_font_sizes/font_size = 34
 
 [node name="SettingsBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "SETTINGS"
 theme_override_font_sizes/font_size = 34
 
 [node name="QuitBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 68)
 text = "QUIT"
 theme_override_font_sizes/font_size = 34

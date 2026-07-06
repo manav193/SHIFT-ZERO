@@ -6,6 +6,7 @@ extends RefCounted
 const ProgressionRules := preload("res://src/core/progression_rules.gd")
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 const BossCatalog := preload("res://src/core/boss_catalog.gd")
+const RewardEconomy := preload("res://src/core/reward_economy.gd")
 
 
 static func today_key() -> String:
@@ -45,6 +46,7 @@ static func ensure_progression(progression: Dictionary) -> Dictionary:
     if not progression.has("achievement_rewards_claimed"):
         progression["achievement_rewards_claimed"] = []
     progression = BossCatalog.ensure_progression(progression)
+    progression = RewardEconomy.ensure_progression(progression)
     if not progression.has("player_stats"):
         progression["player_stats"] = default_stats()
     else:
@@ -187,12 +189,7 @@ static func achievement_progress(progression: Dictionary, achievement: Dictionar
 
 
 static func apply_reward(progression: Dictionary, reward: Dictionary) -> Dictionary:
-    progression = ensure_progression(progression)
-    progression["total_coins"] = int(progression.get("total_coins", 0)) + int(reward.get("coins", 0))
-    var xp := int(progression.get("player_xp", 0)) + int(reward.get("xp", 0))
-    progression["player_xp"] = xp
-    progression["player_level"] = ProgressionRules.level_for_total_xp(xp)
-    return progression
+    return RewardEconomy.apply_reward(ensure_progression(progression), reward)
 
 
 static func daily_counters(stats: Dictionary, run: Dictionary, progression: Dictionary) -> Dictionary:
@@ -214,8 +211,8 @@ static func _mission_pool() -> Array:
         {"type": "distance", "title": "Reach 750m", "target": 750, "reward": {"coins": 100, "xp": 100}},
         {"type": "runs", "title": "Complete 3 runs", "target": 3, "reward": {"coins": 80, "xp": 120}},
         {"type": "run_level", "title": "Reach Run Level 3", "target": 3, "reward": {"coins": 125, "xp": 150}},
-        {"type": "powerups", "title": "Collect 3 powerups", "target": 3, "reward": {"coins": 120, "xp": 160}},
+        {"type": "powerups", "title": "Collect 3 powerups", "target": 3, "reward": {"coins": 120, "xp": 160, "fragments": {"dragon": 1}}},
         {"type": "flips", "title": "Flip gravity 40 times", "target": 40, "reward": {"coins": 90, "xp": 100}},
         {"type": "birds", "title": "Avoid 5 birds", "target": 5, "reward": {"coins": 140, "xp": 180}},
-        {"type": "player_level", "title": "Reach Player Level 5", "target": 5, "reward": {"coins": 200, "xp": 250}},
+        {"type": "player_level", "title": "Reach Player Level 5", "target": 5, "reward": {"coins": 200, "xp": 250, "fragments": {"phoenix": 1}}},
     ]

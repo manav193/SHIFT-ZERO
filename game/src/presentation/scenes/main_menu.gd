@@ -12,9 +12,15 @@ const _DAILY_PATH := "res://src/presentation/scenes/daily_missions.tscn"
 const _ACHIEVEMENTS_PATH := "res://src/presentation/scenes/achievements.tscn"
 const _STATISTICS_PATH := "res://src/presentation/scenes/statistics.tscn"
 const _THEME_GALLERY_PATH := "res://src/presentation/scenes/theme_gallery.tscn"
+const _DAILY_LOGIN_PATH := "res://src/presentation/scenes/daily_login.tscn"
+const _LUCKY_SPIN_PATH := "res://src/presentation/scenes/lucky_spin.tscn"
+const _CHESTS_PATH := "res://src/presentation/scenes/chests.tscn"
 
 @onready var _play_btn: Button = $Center/V/PlayBtn
 @onready var _shop_btn: Button = $Center/V/ShopBtn
+@onready var _daily_login_btn: Button = $Center/V/DailyLoginBtn
+@onready var _lucky_spin_btn: Button = $Center/V/LuckySpinBtn
+@onready var _chests_btn: Button = $Center/V/ChestsBtn
 @onready var _daily_btn: Button = $Center/V/DailyBtn
 @onready var _achievements_btn: Button = $Center/V/AchievementsBtn
 @onready var _statistics_btn: Button = $Center/V/StatisticsBtn
@@ -28,6 +34,9 @@ const _THEME_GALLERY_PATH := "res://src/presentation/scenes/theme_gallery.tscn"
 func _ready() -> void:
     _play_btn.pressed.connect(_on_play_pressed)
     _shop_btn.pressed.connect(_on_shop_pressed)
+    _daily_login_btn.pressed.connect(_on_daily_login_pressed)
+    _lucky_spin_btn.pressed.connect(_on_lucky_spin_pressed)
+    _chests_btn.pressed.connect(_on_chests_pressed)
     _daily_btn.pressed.connect(_on_daily_pressed)
     _achievements_btn.pressed.connect(_on_achievements_pressed)
     _statistics_btn.pressed.connect(_on_statistics_pressed)
@@ -36,6 +45,9 @@ func _ready() -> void:
     _quit_btn.pressed.connect(_on_quit_pressed)
     _wire_button(_play_btn)
     _wire_button(_shop_btn)
+    _wire_button(_daily_login_btn)
+    _wire_button(_lucky_spin_btn)
+    _wire_button(_chests_btn)
     _wire_button(_daily_btn)
     _wire_button(_achievements_btn)
     _wire_button(_statistics_btn)
@@ -61,6 +73,24 @@ func _on_shop_pressed() -> void:
     var result: Result = SceneRouter.push(_SHOP_PATH)
     if not result.ok:
         push_error("MainMenu", "shop failed: %s" % result.error)
+
+
+func _on_daily_login_pressed() -> void:
+    var result: Result = SceneRouter.push(_DAILY_LOGIN_PATH)
+    if not result.ok:
+        push_error("MainMenu", "daily login failed: %s" % result.error)
+
+
+func _on_lucky_spin_pressed() -> void:
+    var result: Result = SceneRouter.push(_LUCKY_SPIN_PATH)
+    if not result.ok:
+        push_error("MainMenu", "lucky spin failed: %s" % result.error)
+
+
+func _on_chests_pressed() -> void:
+    var result: Result = SceneRouter.push(_CHESTS_PATH)
+    if not result.ok:
+        push_error("MainMenu", "chests failed: %s" % result.error)
 
 
 func _on_daily_pressed() -> void:
