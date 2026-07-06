@@ -1,9 +1,8 @@
 ## HUD
 ##
 ## In-game overlay:
-##   - Current score (top-center)
-##   - Best score (top-right)
-##   - Distance (below score)
+##   - Distance (top-center)
+##   - Coins (top-right)
 ##   - Pause button (top-left)
 ##   - Modifier badge (below best, appears while a modifier is active)
 ##   - Pause modal (hidden by default)
@@ -122,9 +121,9 @@ func _ready() -> void:
     EventBus.subscribe(Events.BOSS_FAILED, _on_boss_failed)
     _load_saved_progress()
     _best_label.text = "BEST %d" % _best_score
-    _score_label.text = "0"
-    _distance_label.text = "0 m"
-    _coins_label.text = "COINS 0"
+    _score_label.text = "0 m"
+    _distance_label.text = ""
+    _coins_label.text = "$ 0"
     _player_level_label.text = "LV %d  %s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper()]
     _update_run_level(0)
     _make_flash()
@@ -162,9 +161,9 @@ func _process(delta: float) -> void:
     _display_score = lerpf(_display_score, float(_target_score), 1.0 - exp(-10.0 * delta))
     if abs(_display_score - float(_target_score)) < 0.05:
         _display_score = float(_target_score)
-    _score_label.text = str(int(round(_display_score)))
     var distance_m := int(_director.current_distance() / 100.0)
-    _distance_label.text = "%d m" % distance_m
+    _score_label.text = "%d m" % distance_m
+    _distance_label.text = ""
     _update_run_level(distance_m)
     _update_powerup_badge()
     if _mod_mgr != null and _mod_mgr.has_method("active_id"):
@@ -227,11 +226,11 @@ func _on_run_finished(_payload: Dictionary) -> void:
         _best_score = current
         _persist_best_score(_best_score, distance)
     _best_label.text = "BEST %d" % _best_score
-    _go_score.text = "SCORE %d" % current
-    _go_best.text = "BEST %d%s" % [_best_score, "  NEW!" if new_best else ""]
-    _go_distance.text = "DISTANCE %d m" % distance_m
-    _go_coins.text = "COINS +%d  TOTAL %d" % [_run_coins * _coin_reward_mult, _total_coins]
-    _go_xp.text = "XP +%d" % xp_earned
+    _go_score.text = "%d" % current
+    _go_best.text = "NEW BEST" if new_best else "BEST %d" % _best_score
+    _go_distance.text = "%d m" % distance_m
+    _go_coins.text = "COINS EARNED  +%d" % (_run_coins * _coin_reward_mult)
+    _go_xp.text = "XP EARNED  +%d" % xp_earned
     _go_level.text = "LEVEL %d  %s%s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper(), "  LEVEL UP!" if leveled else ""]
     _update_level_bar()
     _go_modal.visible = true
@@ -293,7 +292,7 @@ func _on_boss_defeated(payload: Dictionary) -> void:
     tween.tween_property(_boss_defeated, "modulate:a", 0.0, 0.25)
     tween.tween_callback(func() -> void: _boss_defeated.visible = false)
     _load_saved_progress()
-    _coins_label.text = "COINS %d" % _run_coins
+    _coins_label.text = "$ %d" % _run_coins
     _player_level_label.text = "LV %d  %s" % [_player_level, ProgressionRules.prestige_rank_for_level(_player_level).to_upper()]
 
 
@@ -305,7 +304,7 @@ func _on_boss_failed(_payload: Dictionary) -> void:
 
 func _on_coin_collected(payload: Dictionary) -> void:
     _run_coins += int(payload.get("value", 1))
-    _coins_label.text = "COINS %d" % _run_coins
+    _coins_label.text = "$ %d" % _run_coins
 
 
 func _on_powerup_collected(_payload: Dictionary) -> void:
@@ -599,29 +598,30 @@ func _apply_responsive_layout() -> void:
     _top.offset_top = safe.y
     _top.offset_right = -safe.x
     _top.offset_bottom = 430.0 * ui_scale
-    _best_label.visible = landscape
-    _player_level_label.visible = landscape
+    _best_label.visible = false
+    _player_level_label.visible = false
     _run_level_label.visible = false
-    _set_label_size(_score_label, 122 if landscape else 112)
-    _set_label_size(_distance_label, 42 if landscape else 38)
+    _distance_label.visible = false
+    _set_label_size(_score_label, 76 if landscape else 70)
+    _set_label_size(_distance_label, 30 if landscape else 28)
     _set_label_size(_best_label, 52 if landscape else 46)
-    _set_label_size(_coins_label, 40 if landscape else 36)
+    _set_label_size(_coins_label, 42 if landscape else 38)
     _set_label_size(_player_level_label, 38 if landscape else 34)
     _set_label_size(_run_level_label, 38 if landscape else 34)
     _set_label_size(_run_level_notice, 50 if landscape else 46)
     _pause_btn.custom_minimum_size = Vector2(116, 104) if landscape else Vector2(104, 96)
     if landscape:
         _score_label.offset_top = 16
-        _score_label.offset_bottom = 136
-        _distance_label.offset_top = 132
-        _distance_label.offset_bottom = 190
+        _score_label.offset_bottom = 104
+        _distance_label.offset_top = 104
+        _distance_label.offset_bottom = 106
         _coins_label.offset_top = 42
         _coins_label.offset_bottom = 96
     else:
         _score_label.offset_top = 20
-        _score_label.offset_bottom = 130
-        _distance_label.offset_top = 130
-        _distance_label.offset_bottom = 184
+        _score_label.offset_bottom = 108
+        _distance_label.offset_top = 108
+        _distance_label.offset_bottom = 110
         _coins_label.offset_top = 36
         _coins_label.offset_bottom = 88
     _layout_modal(_pause_panel, Vector2(620, 540) * ui_scale)

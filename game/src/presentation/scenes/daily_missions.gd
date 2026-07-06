@@ -14,6 +14,8 @@ func _ready() -> void:
     var shell := PremiumUI.screen(self, "MISSIONS", _on_back_pressed)
     _back_btn = shell.back
     _list = shell.list
+    _date_label = PremiumUI.label("DAILY RESET", 22, Color(0.62, 0.82, 1.0, 1.0), HORIZONTAL_ALIGNMENT_RIGHT)
+    shell.header.add_child(_date_label)
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -40,19 +42,20 @@ func _reload() -> void:
         return
     var progression: Dictionary = loaded.value.get("progression", {})
     var daily: Dictionary = progression.get("daily", {})
-    _date_label.text = str(daily.get("last_refresh_date", ""))
+    _date_label.text = "RESET %s" % str(daily.get("last_refresh_date", "TODAY"))
+    _list.add_child(PremiumUI.card_text("BATTLE PASS TASKS", "Complete three daily objectives for coins and XP.", PremiumUI.PINK, 112))
     for mission in daily.get("missions", []):
         _add_mission_row(mission)
     PremiumUI.style_tree(_list)
 
 
 func _add_mission_row(mission: Dictionary) -> void:
-    var card := PremiumUI.card(Color(0.8, 0.24, 1.0, 1.0), 156)
+    var card := PremiumUI.card(Color(0.8, 0.24, 1.0, 1.0), 178)
     var row := HBoxContainer.new()
     row.add_theme_constant_override("separation", 18)
     card.add_child(row)
-    var icon := PremiumUI.label("TASK", 24, Color(1.0, 0.76, 0.05, 1.0))
-    icon.custom_minimum_size = Vector2(82, 0)
+    var icon := PremiumUI.label("XP", 28, Color(1.0, 0.76, 0.05, 1.0))
+    icon.custom_minimum_size = Vector2(92, 0)
     row.add_child(icon)
     var text := VBoxContainer.new()
     text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -60,7 +63,7 @@ func _add_mission_row(mission: Dictionary) -> void:
     var progress := int(mission.get("progress", 0))
     var target := int(mission.get("target", 1))
     var reward: Dictionary = mission.get("reward", {})
-    text.add_child(PremiumUI.label(str(mission.get("title", "Mission")).to_upper(), 28, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    text.add_child(PremiumUI.label(str(mission.get("title", "Mission")).to_upper(), 30, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
     text.add_child(PremiumUI.label("+%d COINS  +%d XP" % [int(reward.get("coins", 0)), int(reward.get("xp", 0))], 20, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
     text.add_child(PremiumUI.progress(progress, target))
     row.add_child(text)

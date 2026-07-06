@@ -27,6 +27,7 @@ var _selected: String = SkinCatalog.CLASSIC
 var _row_buttons: Dictionary = {}
 var _preview_tween: Tween
 var _fragments: Dictionary = {}
+var _category: String = "shapes"
 
 
 func _ready() -> void:
@@ -98,9 +99,18 @@ func _build_skin_list() -> void:
     for child in _skin_list.get_children():
         child.queue_free()
     _row_buttons.clear()
+    _skin_list.add_child(_category_tabs())
+    if _category == "effects":
+        _add_effects_grid()
+        return
+    if _category == "trails":
+        _add_trails_grid()
+        return
+    if _category == "shapes":
+        _add_shapes_grid()
     for skin in SkinCatalog.all():
         var button := Button.new()
-        button.custom_minimum_size = Vector2(0, 122)
+        button.custom_minimum_size = Vector2(0, 148)
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.add_theme_font_size_override("font_size", 26)
         button.text = _row_text(skin)
@@ -112,10 +122,85 @@ func _build_skin_list() -> void:
         PremiumUI.style_button(button, _skin_accent(skin))
 
 
+func _category_tabs() -> GridContainer:
+    var grid := GridContainer.new()
+    grid.columns = 4
+    grid.add_theme_constant_override("h_separation", 10)
+    grid.add_theme_constant_override("v_separation", 10)
+    for item in ["shapes", "skins", "trails", "effects"]:
+        var b := Button.new()
+        b.custom_minimum_size = Vector2(0, 72)
+        b.text = item.to_upper()
+        b.add_theme_font_size_override("font_size", 20)
+        b.pressed.connect(func() -> void: _select_category(item))
+        PremiumUI.style_button(b, PremiumUI.GOLD if item == _category else PremiumUI.CYAN)
+        grid.add_child(b)
+        _wire_button(b)
+    return grid
+
+
+func _select_category(category: String) -> void:
+    _category = category
+    _build_skin_list()
+
+
+func _add_shapes_grid() -> void:
+    var title := PremiumUI.card_text("PLAYABLE SHAPES", "Original procedural silhouettes from the approved UI direction.", PremiumUI.CYAN, 110)
+    _skin_list.add_child(title)
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.add_theme_constant_override("h_separation", 12)
+    grid.add_theme_constant_override("v_separation", 12)
+    _skin_list.add_child(grid)
+    var names := PremiumUI.shape_names()
+    var palette: Array[Color] = [PremiumUI.CYAN, PremiumUI.PINK, PremiumUI.GOLD, PremiumUI.VIOLET, PremiumUI.GREEN]
+    for i in names.size():
+        var accent: Color = palette[i % palette.size()]
+        grid.add_child(PremiumUI.shape_tile(names[i], "preview", accent))
+
+
+func _add_trails_grid() -> void:
+    var title := PremiumUI.card_text("TRAILS", "Speed streaks, shards, flame, circuit, mist, and plasma previews.", PremiumUI.PINK, 110)
+    _skin_list.add_child(title)
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.add_theme_constant_override("h_separation", 12)
+    grid.add_theme_constant_override("v_separation", 12)
+    _skin_list.add_child(grid)
+    for item in [
+        ["Cyber Dash", PremiumUI.CYAN],
+        ["Nova Flame", PremiumUI.GOLD],
+        ["Void Mist", PremiumUI.VIOLET],
+        ["Plasma Slash", PremiumUI.PINK],
+        ["Crystal Shards", Color(0.58, 0.92, 1.0, 1.0)],
+        ["Emerald Wake", PremiumUI.GREEN],
+    ]:
+        grid.add_child(PremiumUI.effect_tile(str(item[0]), item[1]))
+
+
+func _add_effects_grid() -> void:
+    var title := PremiumUI.card_text("EFFECTS", "Flip arcs, spawn rings, landing bursts, and death explosions.", PremiumUI.GOLD, 110)
+    _skin_list.add_child(title)
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.add_theme_constant_override("h_separation", 12)
+    grid.add_theme_constant_override("v_separation", 12)
+    _skin_list.add_child(grid)
+    for item in [
+        ["Flip Arc", PremiumUI.CYAN],
+        ["Landing Burst", PremiumUI.GREEN],
+        ["Spawn Ring", PremiumUI.VIOLET],
+        ["Death Nova", PremiumUI.PINK],
+        ["Boss Spark", PremiumUI.GOLD],
+        ["Void Collapse", Color(0.34, 0.1, 0.7, 1.0)],
+    ]:
+        grid.add_child(PremiumUI.effect_tile(str(item[0]), item[1]))
+
+
 func _select_skin(id: String) -> void:
     _selected = id
     var skin := SkinCatalog.by_id(id)
-    _preview_name.text = str(skin.name)
+    _preview_name.text = str(skin.name).to_upper()
     _preview_player.apply_skin(skin)
     _preview_trail.default_color = _preview_player.trail_color()
     _preview_trail.width = _preview_player.trail_width()
@@ -205,7 +290,7 @@ func _row_text(skin: Dictionary) -> String:
     var fragment_need := RewardEconomy.fragment_requirement(id)
     var price := "%d FRAGS" % fragment_need if fragment_need > 0 else "%d COINS" % int(skin.cost)
     var status := "EQUIPPED" if id == _equipped else ("OWNED" if _is_owned(id) else price)
-    return "%s\n%s  /  %s" % [str(skin.name).to_upper(), _rarity_text(skin), status]
+    return "%s\n%s  /  %s\n%s" % [str(skin.name).to_upper(), _rarity_text(skin), status, _effects_text(skin)]
 
 
 func _state_text(skin: Dictionary) -> String:

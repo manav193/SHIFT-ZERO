@@ -133,7 +133,10 @@ func _build_cinematic_background() -> void:
 
     _showcase = SkinModel.new()
     _showcase.name = "ShowcaseCharacter"
-    _showcase.apply_skin(_skin)
+    var hero_skin := SkinCatalog.by_id("phoenix")
+    if str(hero_skin.get("id", "")) == "":
+        hero_skin = _skin
+    _showcase.apply_skin(hero_skin)
     _root.add_child(_showcase)
 
     var particles := CPUParticles2D.new()
@@ -167,6 +170,7 @@ func _build_content() -> void:
     _content.add_child(stack)
 
     stack.add_child(_top_bar())
+    stack.add_child(_logo_lockup())
     var hero_spacer := Control.new()
     hero_spacer.name = "HeroSpacer"
     hero_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -193,6 +197,20 @@ func _top_bar() -> Control:
     row.add_child(_currency_chip("$", int(_progression.get("total_coins", 0)), Color(1.0, 0.76, 0.05, 1.0)))
     row.add_child(_currency_chip("C", _chest_total(), Color(0.0, 0.82, 1.0, 1.0)))
     return row
+
+
+func _logo_lockup() -> VBoxContainer:
+    var logo := VBoxContainer.new()
+    logo.name = "LogoLockup"
+    logo.alignment = BoxContainer.ALIGNMENT_CENTER
+    logo.add_theme_constant_override("separation", 0)
+    var title := _label("SHIFT ZERO", 58, Color.WHITE)
+    title.add_theme_color_override("font_shadow_color", Color(0.0, 0.82, 1.0, 0.75))
+    title.add_theme_constant_override("shadow_offset_x", 0)
+    title.add_theme_constant_override("shadow_offset_y", 4)
+    logo.add_child(title)
+    logo.add_child(_label("ENDLESS RUNNER", 18, Color(0.62, 0.82, 1.0, 1.0)))
+    return logo
 
 
 func _profile_chip(level: int, xp: int) -> PanelContainer:
@@ -240,8 +258,7 @@ func _start_cluster() -> VBoxContainer:
     box.name = "StartCluster"
     box.add_theme_constant_override("separation", 12)
     box.alignment = BoxContainer.ALIGNMENT_CENTER
-    var start := _button("START RUN", str(_theme.get("name", "NEON CITY")).to_upper(), Color(1.0, 0.74, 0.05, 1.0), _on_play_pressed)
-    start.custom_minimum_size = Vector2(0, 132)
+    var start := PremiumUI.start_button(_on_play_pressed)
     box.add_child(start)
     box.add_child(_control_hint())
     return box
@@ -254,10 +271,9 @@ func _control_hint() -> PanelContainer:
     row.alignment = BoxContainer.ALIGNMENT_CENTER
     row.add_theme_constant_override("separation", 16)
     p.add_child(row)
-    row.add_child(_label("HOLD", 22, Color.WHITE))
-    row.add_child(_label("UP", 28, Color(0.0, 0.941, 1.0, 1.0)))
-    row.add_child(_label("RELEASE", 22, Color.WHITE))
-    row.add_child(_label("DOWN", 28, Color(1.0, 0.169, 0.839, 1.0)))
+    row.add_child(_label("CONTINUE", 22, Color.WHITE))
+    row.add_child(_label("BEST %d" % int(_progression.get("best_score", 0)), 24, Color(1.0, 0.933, 0.0, 1.0)))
+    row.add_child(_label(str(_theme.get("name", "NEON CITY")).to_upper(), 22, Color(0.0, 0.941, 1.0, 1.0)))
     return p
 
 
@@ -371,15 +387,18 @@ func _layout() -> void:
     var bottom := stack.get_node_or_null("BottomNav") as GridContainer
     var rewards := stack.get_node_or_null("RewardStrip") as GridContainer
     var start := stack.get_node_or_null("StartCluster") as Control
+    var logo := stack.get_node_or_null("LogoLockup") as Control
     if bottom != null:
         bottom.columns = 5 if not portrait else 3
     if rewards != null:
         rewards.columns = 3
     if start != null:
         start.custom_minimum_size = Vector2(0, 210 if portrait else 184)
+    if logo != null:
+        logo.visible = portrait
     if _showcase != null:
-        _showcase.position = Vector2(view.x * (0.5 if portrait else 0.56), view.y * (0.39 if portrait else 0.48))
-        var scale := 2.1 if portrait else 3.05
+        _showcase.position = Vector2(view.x * (0.5 if portrait else 0.58), view.y * (0.36 if portrait else 0.52))
+        var scale := 2.7 if portrait else 3.45
         _showcase.scale = Vector2(scale, scale)
     if _trail != null:
         _trail.width = 22.0 if portrait else 30.0

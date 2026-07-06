@@ -44,6 +44,7 @@ func _reload() -> void:
     _overall.text = "COMPLETION %d%%" % _percent(overall)
     for key in ["Skins", "Themes", "Bosses", "Achievements", "Trails", "Effects", "Badges"]:
         _add_row(str(key), rows.get(key, {"owned": 0, "total": 1}))
+    _add_shape_catalog()
     PremiumUI.style_tree(_list)
 
 
@@ -56,6 +57,16 @@ func _add_row(title: String, data: Dictionary) -> void:
     v.add_child(PremiumUI.label("%d / %d" % [int(data.get("owned", 0)), int(data.get("total", 1))], 34, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
     v.add_child(PremiumUI.progress(int(data.get("owned", 0)), int(data.get("total", 1))))
     _list.add_child(panel)
+
+
+func _add_shape_catalog() -> void:
+    var title := PremiumUI.card_text("SHAPE COLLECTION", "Preview the procedural silhouettes used by the premium UI system.", PremiumUI.GOLD, 122)
+    _list.add_child(title)
+    var names := PremiumUI.shape_names()
+    var palette: Array[Color] = [PremiumUI.CYAN, PremiumUI.PINK, PremiumUI.GOLD, PremiumUI.VIOLET, PremiumUI.GREEN]
+    for i in names.size():
+        var accent: Color = palette[i % palette.size()]
+        _list.add_child(PremiumUI.shape_tile(names[i], "catalog", accent))
 
 
 func _percent(data: Dictionary) -> int:
