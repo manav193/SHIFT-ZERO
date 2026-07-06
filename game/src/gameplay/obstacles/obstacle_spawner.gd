@@ -40,12 +40,14 @@ const _VERY_HARD_START_X := 30000.0
 
 var _target: Node2D
 var _difficulty: Node
-var _types: Array = []          # Array<{id, scene, weight, safe_side, category, min_spawn_x, scale_min, scale_max, y_min, y_max}>
+var _types: Array = []          # Array<{id, scene, weight, safe_side, category, min_spawn_x, scale_min, scale_max, y_min, y_max, lane}>
 var _total_weight: float = 0.0
 var _spawned: Array[Node2D] = []
 var _next_spawn_x: float = 0.0
 var _last_safe_side: String = "either"
 var _last_type_id: String = ""
+var _last_lane: String = ""
+var _recent_lanes: Array[String] = []
 var _last_spawn_extra_gap: float = 0.0
 
 var _spacing_min: float = 800.0
@@ -116,6 +118,7 @@ func _spawn_while_needed(px: float) -> void:
 		_next_spawn_x += _apply_fair_min_gap(picked, raw_gap) + _last_spawn_extra_gap
 		_last_safe_side = str(picked.get("safe_side", "either"))
 		_last_type_id = str(picked.get("id", ""))
+		_remember_lane(_lane_for(picked))
 
 
 func _apply_fair_min_gap(picked: Dictionary, raw_gap: float) -> float:
@@ -167,6 +170,8 @@ func _spawn_one(scene: PackedScene, spawn_position: Vector2, spawn_scale: Vector
 	var obs := scene.instantiate() as Node2D
 	obs.position = spawn_position
 	obs.scale = spawn_scale
+	if obs is Obstacle:
+		obs.obstacle_id = obstacle_id
 	obs.set_meta("obstacle_id", obstacle_id)
 	obs.set_meta("category", category)
 	add_child(obs)
@@ -194,6 +199,9 @@ func _pick_type_fair(spawn_x: float = 0.0) -> Dictionary:
 func _is_fair(t: Dictionary, spawn_x: float = 0.0) -> bool:
 	if not _basic_allowed(t, spawn_x):
 		return false
+	var lane := _lane_for(t)
+	if lane != "" and lane == _last_lane and _has_alternative_lane(t, spawn_x):
+		return false
 	var side: String = str(t.get("safe_side", "either"))
 	if _last_safe_side == "either" or side == "either":
 		return true
@@ -204,15 +212,16 @@ func _pick_weighted(spawn_x: float) -> Dictionary:
 	var candidates := _candidate_types(spawn_x)
 	if candidates.is_empty():
 		return {}
+	candidates = _lane_balanced_candidates(candidates)
 	var total_weight := 0.0
 	for t in candidates:
-		total_weight += float(t["weight"])
+		total_weight += _weighted_lane_value(t, spawn_x)
 	if total_weight <= 0.0:
 		return candidates[0]
 	var r: float = _rng.randf() * total_weight
 	var cum: float = 0.0
 	for t in candidates:
-		cum += float(t["weight"])
+		cum += _weighted_lane_value(t, spawn_x)
 		if r <= cum:
 			return t
 	return candidates.back()
@@ -267,6 +276,7 @@ func _load_registry() -> void:
 			"scale_max": _vector2_from_json(item.get("scale_max", [1.0, 1.0]), Vector2.ONE),
 			"y_min": float(item.get("y_min", 1200.0)),
 			"y_max": float(item.get("y_max", 1200.0)),
+			"lane": str(item.get("lane", "")),
 		})
 		_total_weight += weight
 
@@ -351,6 +361,68 @@ func _y_for(type: Dictionary) -> float:
 	var y_min := float(type.get("y_min", 1200.0))
 	var y_max := float(type.get("y_max", y_min))
 	return _rng.randf_range(minf(y_min, y_max), maxf(y_min, y_max))
+
+
+func _lane_for(type: Dictionary) -> String:
+	var explicit := str(type.get("lane", ""))
+	if explicit != "":
+		return explicit
+	var y_min := float(type.get("y_min", 1200.0))
+	var y_max := float(type.get("y_max", y_min))
+	return _lane_from_y((y_min + y_max) * 0.5)
+
+
+func _lane_from_y(y: float) -> String:
+	if y < 520.0:
+		return "upper"
+	if y < 940.0:
+		return "mid_upper"
+	if y < 1460.0:
+		return "center"
+	if y < 1880.0:
+		return "mid_lower"
+	return "lower"
+
+
+func _remember_lane(lane: String) -> void:
+	if lane == "":
+		return
+	_last_lane = lane
+	_recent_lanes.append(lane)
+	while _recent_lanes.size() > 5:
+		_recent_lanes.pop_front()
+
+
+func _has_alternative_lane(t: Dictionary, spawn_x: float) -> bool:
+	var lane := _lane_for(t)
+	for candidate in _types:
+		if candidate == t:
+			continue
+		if not _basic_allowed(candidate, spawn_x):
+			continue
+		if _lane_for(candidate) != lane:
+			return true
+	return false
+
+
+func _lane_balanced_candidates(candidates: Array) -> Array:
+	var varied: Array = []
+	for t in candidates:
+		if _lane_for(t) != _last_lane:
+			varied.append(t)
+	if not varied.is_empty():
+		return varied
+	return candidates
+
+
+func _weighted_lane_value(type: Dictionary, spawn_x: float) -> float:
+	var lane := _lane_for(type)
+	var weight := float(type.get("weight", 1.0))
+	if lane in _recent_lanes:
+		weight *= 0.45
+	if lane in ["mid_upper", "center", "mid_lower"]:
+		weight *= 1.65 if spawn_x >= _MEDIUM_START_X else 1.15
+	return maxf(weight, 0.0)
 
 
 func _candidate_types(spawn_x: float) -> Array:

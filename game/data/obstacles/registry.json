@@ -8,6 +8,7 @@
       "safe_side": "ceiling",
       "scale_min": [0.85, 0.85],
       "scale_max": [1.65, 1.55],
+      "lane": "lower",
       "y_min": 2090.0,
       "y_max": 2240.0
     },
@@ -19,6 +20,7 @@
       "safe_side": "floor",
       "scale_min": [0.85, 0.85],
       "scale_max": [1.65, 1.55],
+      "lane": "upper",
       "y_min": 160.0,
       "y_max": 310.0
     },
@@ -30,8 +32,74 @@
       "safe_side": "either",
       "scale_min": [0.8, 0.7],
       "scale_max": [1.55, 1.45],
+      "lane": "center",
       "y_min": 980.0,
       "y_max": 1450.0
+    },
+    {
+      "id": "floating_block_mid_upper",
+      "scene": "res://src/gameplay/obstacles/floating_block.tscn",
+      "weight": 0.9,
+      "category": "ground",
+      "safe_side": "either",
+      "min_spawn_x": 5000.0,
+      "scale_min": [0.75, 0.75],
+      "scale_max": [1.35, 1.15],
+      "lane": "mid_upper",
+      "y_min": 620.0,
+      "y_max": 850.0
+    },
+    {
+      "id": "floating_block_center",
+      "scene": "res://src/gameplay/obstacles/floating_block.tscn",
+      "weight": 1.0,
+      "category": "ground",
+      "safe_side": "either",
+      "min_spawn_x": 5000.0,
+      "scale_min": [0.85, 0.8],
+      "scale_max": [1.5, 1.2],
+      "lane": "center",
+      "y_min": 1080.0,
+      "y_max": 1340.0
+    },
+    {
+      "id": "floating_block_mid_lower",
+      "scene": "res://src/gameplay/obstacles/floating_block.tscn",
+      "weight": 0.9,
+      "category": "ground",
+      "safe_side": "either",
+      "min_spawn_x": 5000.0,
+      "scale_min": [0.75, 0.75],
+      "scale_max": [1.35, 1.15],
+      "lane": "mid_lower",
+      "y_min": 1540.0,
+      "y_max": 1770.0
+    },
+    {
+      "id": "vertical_column_upper_gap",
+      "scene": "res://src/gameplay/obstacles/vertical_column.tscn",
+      "weight": 0.65,
+      "category": "ground",
+      "safe_side": "either",
+      "min_spawn_x": 5000.0,
+      "scale_min": [0.8, 0.75],
+      "scale_max": [1.2, 1.25],
+      "lane": "mid_upper",
+      "y_min": 650.0,
+      "y_max": 820.0
+    },
+    {
+      "id": "vertical_column_lower_gap",
+      "scene": "res://src/gameplay/obstacles/vertical_column.tscn",
+      "weight": 0.65,
+      "category": "ground",
+      "safe_side": "either",
+      "min_spawn_x": 5000.0,
+      "scale_min": [0.8, 0.75],
+      "scale_max": [1.2, 1.25],
+      "lane": "mid_lower",
+      "y_min": 1580.0,
+      "y_max": 1750.0
     },
     {
       "id": "flying_bird",
@@ -42,8 +110,35 @@
       "min_spawn_x": 15000.0,
       "scale_min": [0.85, 0.85],
       "scale_max": [1.35, 1.25],
-      "y_min": 650.0,
-      "y_max": 1650.0
+      "lane": "center",
+      "y_min": 780.0,
+      "y_max": 1580.0
+    },
+    {
+      "id": "flying_bird_mid_upper",
+      "scene": "res://src/gameplay/obstacles/flying_bird.tscn",
+      "weight": 0.75,
+      "category": "bird",
+      "safe_side": "either",
+      "min_spawn_x": 15000.0,
+      "scale_min": [0.8, 0.8],
+      "scale_max": [1.25, 1.18],
+      "lane": "mid_upper",
+      "y_min": 560.0,
+      "y_max": 860.0
+    },
+    {
+      "id": "flying_bird_mid_lower",
+      "scene": "res://src/gameplay/obstacles/flying_bird.tscn",
+      "weight": 0.75,
+      "category": "bird",
+      "safe_side": "either",
+      "min_spawn_x": 15000.0,
+      "scale_min": [0.8, 0.8],
+      "scale_max": [1.25, 1.18],
+      "lane": "mid_lower",
+      "y_min": 1500.0,
+      "y_max": 1800.0
     }
   ]
 }
