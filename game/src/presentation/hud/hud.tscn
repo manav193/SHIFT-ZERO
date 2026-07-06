@@ -166,6 +166,57 @@ vertical_alignment = 1
 theme_override_font_sizes/font_size = 36
 theme_override_colors/font_color = Color(0, 0.941, 1, 1)
 
+[node name="BossPanel" type="PanelContainer" parent="Top"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 235.0
+offset_right = 300.0
+offset_bottom = 335.0
+theme_override_styles/panel = SubResource("ModifierBadgeBox_m16")
+
+[node name="V" type="VBoxContainer" parent="Top/BossPanel"]
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Name" type="Label" parent="Top/BossPanel/V"]
+text = "BOSS"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 0.933, 0, 1)
+
+[node name="Timer" type="ProgressBar" parent="Top/BossPanel/V"]
+custom_minimum_size = Vector2(0, 24)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="BossWarning" type="Label" parent="Top"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -430.0
+offset_top = 340.0
+offset_right = 430.0
+offset_bottom = 430.0
+text = "WARNING"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 54
+theme_override_colors/font_color = Color(1, 0.271, 0.325, 1)
+
+[node name="BossDefeated" type="Label" parent="Top"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -430.0
+offset_top = 340.0
+offset_right = 430.0
+offset_bottom = 430.0
+text = "BOSS DEFEATED"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 54
+theme_override_colors/font_color = Color(1, 0.933, 0, 1)
+
 [node name="PauseModal" type="Control" parent="."]
 process_mode = 3
 anchor_right = 1.0

@@ -21,6 +21,8 @@ func _ready() -> void:
     EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
     EventBus.subscribe(Events.RUN_LEVEL_CHANGED, _on_run_level_changed)
     EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
+    EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
+    EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
     print("VFX", "vfx system ready")
 
 
@@ -79,6 +81,18 @@ func _on_world_theme_changed(payload: Dictionary) -> void:
         return
     var theme: Dictionary = payload.get("theme", {})
     _burst(pos, theme.get("particle", Color.WHITE), 26, 360.0, 0.55)
+
+
+func _on_boss_started(payload: Dictionary) -> void:
+    var pos: Variant = _find_player_position()
+    if pos is Vector2:
+        _burst(pos, payload.get("color", Color.WHITE), 38, 460.0, 0.55)
+
+
+func _on_boss_defeated(payload: Dictionary) -> void:
+    var pos: Variant = _find_player_position()
+    if pos is Vector2:
+        _burst(pos, payload.get("color", Color(1.0, 0.933, 0.0, 1.0)), 80, 620.0, 0.85)
 
 
 func _burst(pos: Vector2, color: Color, amount: int, speed: float, lifetime: float) -> void:

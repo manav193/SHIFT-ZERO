@@ -25,6 +25,12 @@ func test_default_progression_includes_total_coins():
     assert_eq(progression.equipped_skin, SkinCatalog.CLASSIC)
     assert_true(progression.has("unlocked_themes"))
     assert_true(progression.unlocked_themes.has("neon_city"))
+    assert_true(progression.has("bosses_seen"))
+    assert_true(progression.has("bosses_defeated"))
+    assert_true(progression.has("rare_chests"))
+    assert_true(progression.player_stats.has("bosses_seen"))
+    assert_true(progression.player_stats.has("bosses_defeated"))
+    assert_true(progression.player_stats.has("longest_boss_survival_s"))
 
 
 func test_total_coins_can_be_incremented():

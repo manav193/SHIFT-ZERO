@@ -39,6 +39,8 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flipped)
+    EventBus.subscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
     # We do smoothing ourselves so shake can offset the rendered position
     # without being smoothed away.
     position_smoothing_enabled = false
@@ -56,6 +58,8 @@ func _exit_tree() -> void:
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.unsubscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.unsubscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flipped)
+    EventBus.unsubscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.unsubscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
 
 
 func _process(delta: float) -> void:
@@ -102,6 +106,14 @@ func _on_landed(_p: Dictionary) -> void:
 func _on_run_finished(_p: Dictionary) -> void:
     # Camera impact -- big trauma spike on death.
     shake(maxf(_impact_trauma, 0.9))
+
+
+func _on_boss_warning(_p: Dictionary) -> void:
+    shake(0.12)
+
+
+func _on_boss_defeated(_p: Dictionary) -> void:
+    shake(0.35)
 
 
 func _resolve_target() -> void:

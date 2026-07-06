@@ -5,6 +5,7 @@ extends RefCounted
 
 const ProgressionRules := preload("res://src/core/progression_rules.gd")
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
+const BossCatalog := preload("res://src/core/boss_catalog.gd")
 
 
 static func today_key() -> String:
@@ -25,6 +26,10 @@ static func default_stats() -> Dictionary:
         "coins_collected": 0,
         "powerups_collected": 0,
         "highest_run_level": 1,
+        "bosses_seen": 0,
+        "bosses_defeated": 0,
+        "longest_boss_survival_s": 0,
+        "boss_no_damage_defeats": 0,
     }
 
 
@@ -39,6 +44,7 @@ static func ensure_progression(progression: Dictionary) -> Dictionary:
         progression["achievements_unlocked"] = []
     if not progression.has("achievement_rewards_claimed"):
         progression["achievement_rewards_claimed"] = []
+    progression = BossCatalog.ensure_progression(progression)
     if not progression.has("player_stats"):
         progression["player_stats"] = default_stats()
     else:
@@ -118,7 +124,7 @@ static func claim_daily(progression: Dictionary, mission_id: String) -> Dictiona
 
 
 static func achievements() -> Array:
-    return [
+    var out := [
         {"id": "first_run", "title": "First Run", "desc": "Complete one run.", "type": "total_runs", "target": 1, "reward": {"coins": 25, "xp": 50}},
         {"id": "first_coin", "title": "First Coin", "desc": "Collect one coin.", "type": "coins_collected", "target": 1, "reward": {"coins": 25, "xp": 50}},
         {"id": "coins_100", "title": "100 Coins", "desc": "Collect 100 coins total.", "type": "coins_collected", "target": 100, "reward": {"coins": 100, "xp": 100}},
@@ -133,6 +139,8 @@ static func achievements() -> Array:
         {"id": "all_powerups", "title": "Every Powerup", "desc": "Collect 3 powerups total.", "type": "powerups_collected", "target": 3, "reward": {"coins": 250, "xp": 250}},
         {"id": "survive_10m", "title": "Survive 10 Minutes", "desc": "Play for 10 minutes total.", "type": "total_play_time_s", "target": 600, "reward": {"coins": 1000, "xp": 1000}},
     ]
+    out.append_array(BossCatalog.boss_achievements())
+    return out
 
 
 static func update_achievements(progression: Dictionary) -> Dictionary:
@@ -142,7 +150,8 @@ static func update_achievements(progression: Dictionary) -> Dictionary:
         var id := str(achievement.id)
         if unlocked.has(id):
             continue
-        if achievement_progress(progression, achievement) >= int(achievement.target):
+        var target_value := 1 if str(achievement.get("type", "")) == "boss_defeated_id" else int(achievement.target)
+        if achievement_progress(progression, achievement) >= target_value:
             unlocked.append(id)
     progression["achievements_unlocked"] = unlocked
     return progression
@@ -171,6 +180,8 @@ static func achievement_progress(progression: Dictionary, achievement: Dictionar
             return int(progression.get("player_level", 1))
         "skins_owned":
             return (progression.get("purchased_skins", []) as Array).size()
+        "boss_defeated_id":
+            return 1 if (progression.get("bosses_defeated", []) as Array).has(str(achievement.get("target", ""))) else 0
         _:
             return int(stats.get(kind, 0))
 

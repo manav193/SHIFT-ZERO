@@ -60,6 +60,7 @@ var _difficulty_scale_distance: float = 10000.0
 var _rng: RandomNumberGenerator
 var _spawning_enabled: bool = true
 var _obstacle_palette: Array = []
+var _boss_active: bool = false
 
 
 func _ready() -> void:
@@ -72,6 +73,10 @@ func _ready() -> void:
 	_next_spawn_x = _first_spawn_x
 	EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
 	EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
+	EventBus.subscribe(Events.BOSS_WARNING, _on_boss_started)
+	EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
+	EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_ended)
+	EventBus.subscribe(Events.BOSS_FAILED, _on_boss_ended)
 	print("Obstacles", "spawner ready. types=%d spacing=[%.0f,%.0f] first_x=%.0f" % [
 		_types.size(), _spacing_min, _spacing_max, _first_spawn_x,
 	])
@@ -80,13 +85,18 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	EventBus.unsubscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
 	EventBus.unsubscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
+	EventBus.unsubscribe(Events.BOSS_WARNING, _on_boss_started)
+	EventBus.unsubscribe(Events.BOSS_STARTED, _on_boss_started)
+	EventBus.unsubscribe(Events.BOSS_DEFEATED, _on_boss_ended)
+	EventBus.unsubscribe(Events.BOSS_FAILED, _on_boss_ended)
 
 
 func _process(_delta: float) -> void:
 	if _target == null or not _spawning_enabled:
 		return
 	var px: float = _target.position.x
-	_spawn_while_needed(px)
+	if not _boss_active:
+		_spawn_while_needed(px)
 	_despawn_behind_player(px)
 
 
@@ -300,6 +310,14 @@ func _on_world_theme_changed(payload: Dictionary) -> void:
 	for obs in _spawned:
 		if is_instance_valid(obs) and obs.has_method("apply_theme_palette"):
 			obs.apply_theme_palette(_obstacle_palette)
+
+
+func _on_boss_started(_payload: Dictionary) -> void:
+	_boss_active = true
+
+
+func _on_boss_ended(_payload: Dictionary) -> void:
+	_boss_active = false
 
 
 func _scale_for(type: Dictionary, spawn_x: float) -> Vector2:

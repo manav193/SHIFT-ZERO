@@ -48,6 +48,11 @@ func _reload() -> void:
         ["Coins Collected", stats.coins_collected],
         ["Powerups Collected", stats.powerups_collected],
         ["Highest Run Level", stats.highest_run_level],
+        ["Bosses Seen", stats.get("bosses_seen", 0)],
+        ["Bosses Defeated", stats.get("bosses_defeated", 0)],
+        ["Longest Boss Survival", "%ds" % int(stats.get("longest_boss_survival_s", 0))],
+        ["No-Damage Boss Wins", stats.get("boss_no_damage_defeats", 0)],
+        ["Rare Chests", progression.get("rare_chests", 0)],
     ]
     for row in rows:
         _add_cell(str(row[0]), true)

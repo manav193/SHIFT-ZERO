@@ -18,6 +18,7 @@ var _next_powerup_x: float = 5200.0
 var _spawned: Array[Node2D] = []
 var _coin_color: Color = Color(1.0, 0.933, 0.0, 1.0)
 var _powerup_color: Color = Color(0.0, 0.941, 1.0, 1.0)
+var _boss_active: bool = false
 
 
 func _ready() -> void:
@@ -26,22 +27,31 @@ func _ready() -> void:
     if n is Node2D:
         _target = n
     EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
+    EventBus.subscribe(Events.BOSS_WARNING, _on_boss_started)
+    EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
+    EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_ended)
+    EventBus.subscribe(Events.BOSS_FAILED, _on_boss_ended)
 
 
 func _exit_tree() -> void:
     EventBus.unsubscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
+    EventBus.unsubscribe(Events.BOSS_WARNING, _on_boss_started)
+    EventBus.unsubscribe(Events.BOSS_STARTED, _on_boss_started)
+    EventBus.unsubscribe(Events.BOSS_DEFEATED, _on_boss_ended)
+    EventBus.unsubscribe(Events.BOSS_FAILED, _on_boss_ended)
 
 
 func _process(_delta: float) -> void:
     if _target == null:
         return
     var px := _target.position.x
-    while _next_coin_x < px + 2600.0:
-        _spawn_coin_arc(_next_coin_x)
-        _next_coin_x += _rng.randf_range(620.0, 980.0)
-    while _next_powerup_x < px + 3000.0:
-        _spawn_powerup(_next_powerup_x)
-        _next_powerup_x += _rng.randf_range(5200.0, 8200.0)
+    if not _boss_active:
+        while _next_coin_x < px + 2600.0:
+            _spawn_coin_arc(_next_coin_x)
+            _next_coin_x += _rng.randf_range(620.0, 980.0)
+        while _next_powerup_x < px + 3000.0:
+            _spawn_powerup(_next_powerup_x)
+            _next_powerup_x += _rng.randf_range(5200.0, 8200.0)
     _despawn_behind(px)
 
 
@@ -97,3 +107,11 @@ func _on_world_theme_changed(payload: Dictionary) -> void:
             item.apply_theme_color(_coin_color)
         elif item is PowerupCollectible:
             item.apply_theme_color(_powerup_color)
+
+
+func _on_boss_started(_payload: Dictionary) -> void:
+    _boss_active = true
+
+
+func _on_boss_ended(_payload: Dictionary) -> void:
+    _boss_active = false

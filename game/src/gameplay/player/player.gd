@@ -41,6 +41,8 @@ var _run_speed: float = 420.0
 
 # Runtime modifier multipliers. 1.0 = no effect.
 var _gravity_mult: float = 1.0
+var _boss_gravity_mult: float = 1.0
+var _boss_gravity_until_ms: int = 0
 var _speed_mult: float = 1.0
 var _shield_charges: int = 0
 var _magnet_until_ms: int = 0
@@ -67,6 +69,7 @@ func _ready() -> void:
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
+    EventBus.subscribe(Events.BOSS_GRAVITY_PULSE, _on_boss_gravity_pulse)
     print("Player", "ready. dir=%d g=%.1f v_term=%.1f cd=%dms run=%.1f" % [
         _gravity_dir, _gravity_magnitude, _terminal_velocity, _flip_cooldown_ms, _run_speed,
     ])
@@ -79,6 +82,7 @@ func _exit_tree() -> void:
     EventBus.unsubscribe(Events.RUN_FINISHED, _on_run_finished)
     EventBus.unsubscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.unsubscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
+    EventBus.unsubscribe(Events.BOSS_GRAVITY_PULSE, _on_boss_gravity_pulse)
 
 
 func _physics_process(delta: float) -> void:
@@ -86,7 +90,8 @@ func _physics_process(delta: float) -> void:
         return
     _update_powerup_expiry()
     _update_trail()
-    velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * delta
+    _update_boss_gravity_expiry()
+    velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * _boss_gravity_mult * delta
     velocity.y = clampf(velocity.y, -_terminal_velocity, _terminal_velocity)
     velocity.x = _run_speed * speed_multiplier()
     move_and_slide()
@@ -194,6 +199,8 @@ func _on_remote_config_activated(_payload: Dictionary) -> void:
 func _on_run_started(_payload: Dictionary) -> void:
     _active = true
     _gravity_mult = 1.0
+    _boss_gravity_mult = 1.0
+    _boss_gravity_until_ms = 0
     _speed_mult = 1.0
     _shield_charges = 0
     _magnet_until_ms = 0
@@ -229,6 +236,17 @@ func _on_modifier_expired(payload: Dictionary) -> void:
             _gravity_mult = 1.0
         "speed_burst":
             _speed_mult = 1.0
+
+
+func _on_boss_gravity_pulse(payload: Dictionary) -> void:
+    _boss_gravity_mult = clampf(float(payload.get("scale", 1.0)), 0.55, 1.4)
+    _boss_gravity_until_ms = Time.get_ticks_msec() + int(float(payload.get("duration_s", 1.5)) * 1000.0)
+
+
+func _update_boss_gravity_expiry() -> void:
+    if _boss_gravity_until_ms > 0 and Time.get_ticks_msec() >= _boss_gravity_until_ms:
+        _boss_gravity_until_ms = 0
+        _boss_gravity_mult = 1.0
 
 
 func _reload_tunables() -> void:

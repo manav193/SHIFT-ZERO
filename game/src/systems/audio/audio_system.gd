@@ -30,6 +30,9 @@ func _ready() -> void:
     EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
     EventBus.subscribe(Events.RUN_LEVEL_CHANGED, _on_run_level_changed)
     EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
+    EventBus.subscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
+    EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
     print("Audio", "audio system ready (%d cues, pool=%d)" % [_streams.size(), _POOL_SIZE])
 
 
@@ -84,6 +87,18 @@ func _on_world_theme_changed(payload: Dictionary) -> void:
         play("theme", -9.0)
 
 
+func _on_boss_warning(_payload: Dictionary) -> void:
+    play("boss_warn", -5.0)
+
+
+func _on_boss_started(_payload: Dictionary) -> void:
+    play("boss_start", -5.0)
+
+
+func _on_boss_defeated(_payload: Dictionary) -> void:
+    play("boss_win", -4.0)
+
+
 func _create_pool() -> void:
     for i in _POOL_SIZE:
         var p := AudioStreamPlayer.new()
@@ -102,6 +117,9 @@ func _generate_streams() -> void:
     _streams["powerup"] = _sweep(520.0, 1180.0, 0.28)
     _streams["level"] = _sweep(360.0, 760.0, 0.18)
     _streams["theme"] = _sweep(260.0, 920.0, 0.32)
+    _streams["boss_warn"] = _sweep(180.0, 90.0, 0.34)
+    _streams["boss_start"] = _sweep(220.0, 620.0, 0.42)
+    _streams["boss_win"] = _sweep(420.0, 1200.0, 0.5)
 
 
 func _sine(freq: float, dur: float) -> AudioStreamWAV:

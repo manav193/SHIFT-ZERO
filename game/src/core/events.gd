@@ -23,6 +23,14 @@ const RUN_RESUMED           := "run/resumed"
 const RUN_LEVEL_CHANGED     := "run/level_changed"
 const OBSTACLE_AVOIDED      := "run/obstacle_avoided"
 
+# ---------- Boss events ----------
+const BOSS_WARNING          := "boss/warning"
+const BOSS_STARTED          := "boss/started"
+const BOSS_PROGRESS         := "boss/progress"
+const BOSS_DEFEATED         := "boss/defeated"
+const BOSS_FAILED           := "boss/failed"
+const BOSS_GRAVITY_PULSE    := "boss/gravity_pulse"
+
 # ---------- Modifier ----------
 const MODIFIER_ACTIVATED    := "modifier/activated"
 const MODIFIER_EXPIRED      := "modifier/expired"

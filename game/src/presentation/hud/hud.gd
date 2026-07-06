@@ -35,6 +35,11 @@ const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
 @onready var _modifier_badge: Control = $Top/ModifierBadge
 @onready var _modifier_label: Label = $Top/ModifierBadge/Label
 @onready var _modifier_time: Label = $Top/ModifierBadge/Time
+@onready var _boss_panel: Control = $Top/BossPanel
+@onready var _boss_name: Label = $Top/BossPanel/V/Name
+@onready var _boss_timer: ProgressBar = $Top/BossPanel/V/Timer
+@onready var _boss_warning: Label = $Top/BossWarning
+@onready var _boss_defeated: Label = $Top/BossDefeated
 @onready var _pause_modal: Control = $PauseModal
 @onready var _pause_panel: Control = $PauseModal/Panel
 @onready var _pause_resume_btn: Button = $PauseModal/Panel/V/ResumeBtn
@@ -77,6 +82,9 @@ func _ready() -> void:
     _go_modal.visible = false
     _modifier_badge.visible = false
     _run_level_notice.visible = false
+    _boss_panel.visible = false
+    _boss_warning.visible = false
+    _boss_defeated.visible = false
     _pause_btn.pressed.connect(_on_pause_pressed)
     _pause_resume_btn.pressed.connect(_on_resume_pressed)
     _pause_restart_btn.pressed.connect(_on_restart_pressed)
@@ -96,6 +104,11 @@ func _ready() -> void:
     EventBus.subscribe(Events.SHIELD_USED, _on_shield_used)
     EventBus.subscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.subscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
+    EventBus.subscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
+    EventBus.subscribe(Events.BOSS_PROGRESS, _on_boss_progress)
+    EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
+    EventBus.subscribe(Events.BOSS_FAILED, _on_boss_failed)
     _load_saved_progress()
     _best_label.text = "BEST %d" % _best_score
     _score_label.text = "0"
@@ -118,6 +131,11 @@ func _exit_tree() -> void:
     EventBus.unsubscribe(Events.SHIELD_USED, _on_shield_used)
     EventBus.unsubscribe(Events.MODIFIER_ACTIVATED, _on_modifier_activated)
     EventBus.unsubscribe(Events.MODIFIER_EXPIRED, _on_modifier_expired)
+    EventBus.unsubscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.unsubscribe(Events.BOSS_STARTED, _on_boss_started)
+    EventBus.unsubscribe(Events.BOSS_PROGRESS, _on_boss_progress)
+    EventBus.unsubscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
+    EventBus.unsubscribe(Events.BOSS_FAILED, _on_boss_failed)
 
 
 func _process(delta: float) -> void:
@@ -199,6 +217,55 @@ func _on_modifier_activated(payload: Dictionary) -> void:
 
 func _on_modifier_expired(_payload: Dictionary) -> void:
     _modifier_badge.visible = false
+
+
+func _on_boss_warning(payload: Dictionary) -> void:
+    _boss_warning.text = "WARNING\n%s  %d" % [str(payload.get("name", "BOSS")).to_upper(), int(payload.get("countdown", 0))]
+    _boss_warning.visible = true
+    _boss_warning.modulate.a = 1.0
+    _boss_warning.scale = Vector2(0.96, 0.96)
+    _boss_panel.visible = false
+
+
+func _on_boss_started(payload: Dictionary) -> void:
+    _boss_warning.visible = false
+    _boss_defeated.visible = false
+    _boss_panel.visible = true
+    _boss_name.text = str(payload.get("name", "BOSS")).to_upper()
+    _boss_timer.max_value = float(payload.get("duration_s", 1.0))
+    _boss_timer.value = _boss_timer.max_value
+    _animate_modal(_boss_panel)
+
+
+func _on_boss_progress(payload: Dictionary) -> void:
+    _boss_panel.visible = true
+    _boss_timer.max_value = float(payload.get("duration_s", 1.0))
+    _boss_timer.value = float(payload.get("remaining_s", 0.0))
+
+
+func _on_boss_defeated(payload: Dictionary) -> void:
+    _boss_panel.visible = false
+    _boss_warning.visible = false
+    _boss_defeated.text = "BOSS DEFEATED\n+%d COINS  +%d XP" % [int(payload.get("coins", 0)), int(payload.get("xp", 0))]
+    _boss_defeated.visible = true
+    _boss_defeated.modulate.a = 1.0
+    _boss_defeated.scale = Vector2(0.88, 0.88)
+    var tween := create_tween()
+    tween.set_trans(Tween.TRANS_BACK)
+    tween.set_ease(Tween.EASE_OUT)
+    tween.tween_property(_boss_defeated, "scale", Vector2.ONE, 0.18)
+    tween.tween_interval(1.35)
+    tween.tween_property(_boss_defeated, "modulate:a", 0.0, 0.25)
+    tween.tween_callback(func() -> void: _boss_defeated.visible = false)
+    _load_saved_progress()
+    _coins_label.text = "COINS %d" % _run_coins
+    _player_level_label.text = "LV %d" % _player_level
+
+
+func _on_boss_failed(_payload: Dictionary) -> void:
+    _boss_panel.visible = false
+    _boss_warning.visible = false
+    _boss_defeated.visible = false
 
 
 func _on_coin_collected(payload: Dictionary) -> void:
