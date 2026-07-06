@@ -22,6 +22,8 @@ const ProgressionContent := preload("res://src/core/progression_content.gd")
 const ThemeCatalog := preload("res://src/core/theme_catalog.gd")
 const RewardEconomy := preload("res://src/core/reward_economy.gd")
 const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
+const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
+const _CHESTS_PATH := "res://src/presentation/scenes/chests.tscn"
 
 @export var run_director: NodePath
 @export var modifier_manager: NodePath
@@ -78,6 +80,8 @@ var _last_run_level: int = 1
 var _active_powerups: Dictionary = {}
 var _coin_reward_mult: int = 1
 var _xp_reward_mult: int = 1
+var _go_home_btn: Button
+var _go_rewards_btn: Button
 
 
 func _ready() -> void:
@@ -95,6 +99,7 @@ func _ready() -> void:
     _pause_resume_btn.pressed.connect(_on_resume_pressed)
     _pause_restart_btn.pressed.connect(_on_restart_pressed)
     _go_restart_btn.pressed.connect(_on_restart_pressed)
+    _build_result_actions()
     _wire_button(_pause_btn)
     _wire_button(_pause_resume_btn)
     _wire_button(_pause_restart_btn)
@@ -187,6 +192,22 @@ func _on_restart_pressed() -> void:
     get_tree().paused = false
     Engine.time_scale = 1.0
     get_tree().reload_current_scene()
+
+
+func _on_home_pressed() -> void:
+    get_tree().paused = false
+    Engine.time_scale = 1.0
+    var result: Result = SceneRouter.push(_MAIN_MENU_PATH)
+    if not result.ok:
+        push_error("HUD", "home failed: %s" % result.error)
+
+
+func _on_rewards_pressed() -> void:
+    get_tree().paused = false
+    Engine.time_scale = 1.0
+    var result: Result = SceneRouter.push(_CHESTS_PATH)
+    if not result.ok:
+        push_error("HUD", "rewards failed: %s" % result.error)
 
 
 func _on_run_finished(_payload: Dictionary) -> void:
@@ -542,6 +563,30 @@ func _make_flash() -> void:
     add_child(_flash)
 
 
+func _build_result_actions() -> void:
+    var parent := _go_restart_btn.get_parent()
+    if parent == null:
+        return
+    _go_restart_btn.text = "RETRY"
+    _go_home_btn = Button.new()
+    _go_home_btn.custom_minimum_size = Vector2(0, 104)
+    _go_home_btn.text = "HOME"
+    _go_home_btn.add_theme_font_size_override("font_size", 38)
+    _go_home_btn.pressed.connect(_on_home_pressed)
+    parent.add_child(_go_home_btn)
+    _go_rewards_btn = Button.new()
+    _go_rewards_btn.custom_minimum_size = Vector2(0, 104)
+    _go_rewards_btn.text = "REWARDS"
+    _go_rewards_btn.add_theme_font_size_override("font_size", 38)
+    _go_rewards_btn.pressed.connect(_on_rewards_pressed)
+    parent.add_child(_go_rewards_btn)
+    PremiumUI.style_button(_go_restart_btn, Color(1.0, 0.76, 0.05, 1.0))
+    PremiumUI.style_button(_go_home_btn, Color(0.0, 0.82, 1.0, 1.0))
+    PremiumUI.style_button(_go_rewards_btn, Color(1.0, 0.169, 0.839, 1.0))
+    _wire_button(_go_home_btn)
+    _wire_button(_go_rewards_btn)
+
+
 func _apply_responsive_layout() -> void:
     var view := get_viewport_rect().size
     if view.x <= 0.0 or view.y <= 0.0:
@@ -554,30 +599,33 @@ func _apply_responsive_layout() -> void:
     _top.offset_top = safe.y
     _top.offset_right = -safe.x
     _top.offset_bottom = 430.0 * ui_scale
-    _set_label_size(_score_label, 112 if landscape else 104)
+    _best_label.visible = landscape
+    _player_level_label.visible = landscape
+    _run_level_label.visible = false
+    _set_label_size(_score_label, 122 if landscape else 112)
     _set_label_size(_distance_label, 42 if landscape else 38)
     _set_label_size(_best_label, 52 if landscape else 46)
     _set_label_size(_coins_label, 40 if landscape else 36)
     _set_label_size(_player_level_label, 38 if landscape else 34)
     _set_label_size(_run_level_label, 38 if landscape else 34)
     _set_label_size(_run_level_notice, 50 if landscape else 46)
-    _pause_btn.custom_minimum_size = Vector2(150, 120) if landscape else Vector2(140, 112)
+    _pause_btn.custom_minimum_size = Vector2(116, 104) if landscape else Vector2(104, 96)
     if landscape:
         _score_label.offset_top = 16
         _score_label.offset_bottom = 136
         _distance_label.offset_top = 132
         _distance_label.offset_bottom = 190
-        _run_level_label.offset_top = 190
-        _run_level_label.offset_bottom = 248
+        _coins_label.offset_top = 42
+        _coins_label.offset_bottom = 96
     else:
         _score_label.offset_top = 20
         _score_label.offset_bottom = 130
         _distance_label.offset_top = 130
         _distance_label.offset_bottom = 184
-        _run_level_label.offset_top = 188
-        _run_level_label.offset_bottom = 242
+        _coins_label.offset_top = 36
+        _coins_label.offset_bottom = 88
     _layout_modal(_pause_panel, Vector2(620, 540) * ui_scale)
-    _layout_modal(_go_panel, Vector2(760, 940) * ui_scale)
+    _layout_modal(_go_panel, Vector2(760, 1080) * ui_scale)
 
 
 func _responsive_ui_scale(view: Vector2, landscape: bool) -> float:

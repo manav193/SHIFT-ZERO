@@ -6,13 +6,24 @@ const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
-@onready var _chest_list: VBoxContainer = $Root/Body/Chests/Scroll/List
-@onready var _booster_list: VBoxContainer = $Root/Body/Boosters/Scroll/List
+@onready var _chest_list: Container = $Root/Body/Chests/Scroll/List
+@onready var _booster_list: Container = $Root/Body/Boosters/Scroll/List
 @onready var _result: Label = $Root/Result
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    var shell := PremiumUI.screen(self, "CHESTS", _on_back_pressed)
+    _back_btn = shell.back
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 14)
+    grid.add_theme_constant_override("v_separation", 14)
+    shell.list.add_child(grid)
+    _chest_list = grid
+    _booster_list = grid
+    _result = PremiumUI.label("", 28, Color(1.0, 0.933, 0.0, 1.0))
+    shell.list.add_child(_result)
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -20,29 +31,23 @@ func _ready() -> void:
 func _reload() -> void:
     for child in _chest_list.get_children():
         child.queue_free()
-    for child in _booster_list.get_children():
-        child.queue_free()
     var progression := _load_progression()
     var chests: Dictionary = progression.get("chest_inventory", {})
     for chest_id in RewardEconomy.CHESTS:
-        var button := Button.new()
-        button.custom_minimum_size = Vector2(0, 72)
-        button.text = "%s CHEST  x%d" % [str(chest_id).to_upper(), int(chests.get(chest_id, 0))]
+        var button := PremiumUI.button("%s CHEST" % str(chest_id).to_upper(), "x%d" % int(chests.get(chest_id, 0)), Color(1.0, 0.76, 0.05, 1.0), Callable())
+        button.custom_minimum_size = Vector2(0, 132)
         button.disabled = int(chests.get(chest_id, 0)) <= 0
         button.pressed.connect(func() -> void: _open_chest(chest_id))
         _chest_list.add_child(button)
-        PremiumUI.style_button(button, Color(1.0, 0.76, 0.05, 1.0))
     var boosters: Dictionary = progression.get("booster_inventory", {})
     var equipped: Array = progression.get("equipped_boosters", [])
     for booster_id in RewardEconomy.BOOSTERS:
-        var button := Button.new()
-        button.custom_minimum_size = Vector2(0, 72)
         var is_equipped := equipped.has(booster_id)
-        button.text = "%s  x%d%s" % [str(booster_id).replace("_", " ").to_upper(), int(boosters.get(booster_id, 0)), "  EQUIPPED" if is_equipped else ""]
+        var button := PremiumUI.button(str(booster_id).replace("_", " ").to_upper(), "x%d%s" % [int(boosters.get(booster_id, 0)), "  EQUIPPED" if is_equipped else ""], Color(0.0, 0.82, 1.0, 1.0), Callable())
+        button.custom_minimum_size = Vector2(0, 132)
         button.disabled = int(boosters.get(booster_id, 0)) <= 0 and not is_equipped
         button.pressed.connect(func() -> void: _toggle_booster(booster_id, not is_equipped))
         _booster_list.add_child(button)
-        PremiumUI.style_button(button, Color(0.0, 0.941, 1.0, 1.0))
 
 
 func _open_chest(chest_id: String) -> void:

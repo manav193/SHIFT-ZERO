@@ -15,6 +15,113 @@ static func apply_screen(root: Control, add_backdrop: bool = true) -> void:
     style_tree(root)
 
 
+static func clear(root: Node) -> void:
+    for child in root.get_children():
+        child.queue_free()
+
+
+static func screen(root: Control, title: String, back_callback: Callable) -> Dictionary:
+    clear(root)
+    _ensure_backdrop(root)
+    var layer := Control.new()
+    layer.name = "ReimaginedUI"
+    layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+    root.add_child(layer)
+    _add_atmosphere(layer)
+
+    var margin := MarginContainer.new()
+    margin.name = "SafeFrame"
+    margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+    margin.add_theme_constant_override("margin_left", 34)
+    margin.add_theme_constant_override("margin_top", 32)
+    margin.add_theme_constant_override("margin_right", 34)
+    margin.add_theme_constant_override("margin_bottom", 34)
+    layer.add_child(margin)
+
+    var stack := VBoxContainer.new()
+    stack.name = "Stack"
+    stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    stack.add_theme_constant_override("separation", 22)
+    margin.add_child(stack)
+
+    var header := HBoxContainer.new()
+    header.custom_minimum_size = Vector2(0, 86)
+    header.add_theme_constant_override("separation", 16)
+    stack.add_child(header)
+    var back := button("BACK", "", CYAN, Callable())
+    back.custom_minimum_size = Vector2(138, 74)
+    header.add_child(back)
+    var title_label := label(title, 48, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT)
+    title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    header.add_child(title_label)
+
+    var scroll := ScrollContainer.new()
+    scroll.name = "Scroll"
+    scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    stack.add_child(scroll)
+    var list := VBoxContainer.new()
+    list.name = "List"
+    list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    list.add_theme_constant_override("separation", 18)
+    scroll.add_child(list)
+    return {"layer": layer, "stack": stack, "header": header, "scroll": scroll, "list": list, "back": back}
+
+
+static func card(accent: Color = CYAN, height: float = 120.0) -> PanelContainer:
+    var p := PanelContainer.new()
+    p.custom_minimum_size = Vector2(0, height)
+    p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    style_panel(p, accent)
+    return p
+
+
+static func label(text: String, size_px: int, color: Color = Color.WHITE, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_CENTER) -> Label:
+    var l := Label.new()
+    l.text = text
+    l.horizontal_alignment = align
+    l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    l.add_theme_font_size_override("font_size", size_px)
+    l.add_theme_color_override("font_color", color)
+    style_label(l)
+    return l
+
+
+static func button(title: String, sub: String, accent: Color, callback: Callable) -> Button:
+    var b := Button.new()
+    b.text = title if sub == "" else "%s\n%s" % [title, sub]
+    b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+    b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    b.custom_minimum_size = Vector2(0, 92)
+    style_button(b, accent)
+    if callback.is_valid():
+        b.pressed.connect(callback)
+    return b
+
+
+static func progress(value: float, max_value: float) -> ProgressBar:
+    var bar := ProgressBar.new()
+    bar.custom_minimum_size = Vector2(0, 24)
+    bar.max_value = maxf(1.0, max_value)
+    bar.value = clampf(value, 0.0, bar.max_value)
+    bar.show_percentage = false
+    style_progress(bar)
+    return bar
+
+
+static func card_text(title: String, sub: String, accent: Color, height: float = 132.0) -> PanelContainer:
+    var p := card(accent, height)
+    var v := VBoxContainer.new()
+    v.add_theme_constant_override("separation", 8)
+    p.add_child(v)
+    v.add_child(label(title, 30, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    if sub != "":
+        v.add_child(label(sub, 22, Color(0.75, 0.88, 1.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    return p
+
+
 static func style_tree(node: Node) -> void:
     if node is Button:
         style_button(node as Button)
@@ -66,6 +173,22 @@ static func _ensure_backdrop(root: Control) -> void:
     bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(bg)
     root.move_child(bg, 0)
+
+
+static func _add_atmosphere(root: Control) -> void:
+    var top := ColorRect.new()
+    top.anchor_right = 1.0
+    top.anchor_bottom = 0.42
+    top.color = Color(0.0, 0.25, 0.45, 0.16)
+    top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(top)
+    var bottom := ColorRect.new()
+    bottom.anchor_top = 0.45
+    bottom.anchor_right = 1.0
+    bottom.anchor_bottom = 1.0
+    bottom.color = Color(0.5, 0.0, 0.6, 0.13)
+    bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(bottom)
 
 
 static func _box(bg: Color, border: Color, width: int, radius: int) -> StyleBoxFlat:

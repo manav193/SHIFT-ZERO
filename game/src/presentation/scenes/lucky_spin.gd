@@ -12,9 +12,23 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    var shell := PremiumUI.screen(self, "LUCKY SPIN", _on_back_pressed)
+    _back_btn = shell.back
+    _wheel = PremiumUI.label("SPIN", 70, Color(1.0, 0.76, 0.05, 1.0))
+    shell.list.add_child(_wheel)
+    var rewards := GridContainer.new()
+    rewards.columns = 3
+    rewards.add_theme_constant_override("h_separation", 12)
+    rewards.add_theme_constant_override("v_separation", 12)
+    shell.list.add_child(rewards)
+    for item in ["COINS", "XP", "CHEST", "SHIELD", "MAGNET", "2X"]:
+        rewards.add_child(PremiumUI.card_text(item, "REWARD", Color(0.0, 0.82, 1.0, 1.0), 98))
+    _spin_btn = PremiumUI.button("SPIN", "FREE DAILY", Color(1.0, 0.76, 0.05, 1.0), _on_spin_pressed)
+    _spin_btn.custom_minimum_size = Vector2(0, 118)
+    shell.list.add_child(_spin_btn)
+    _result = PremiumUI.label("", 30, Color.WHITE)
+    shell.list.add_child(_result)
     _back_btn.pressed.connect(_on_back_pressed)
-    _spin_btn.pressed.connect(_on_spin_pressed)
     _reload()
 
 

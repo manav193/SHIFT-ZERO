@@ -11,7 +11,9 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    var shell := PremiumUI.screen(self, "MISSIONS", _on_back_pressed)
+    _back_btn = shell.back
+    _list = shell.list
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -45,41 +47,33 @@ func _reload() -> void:
 
 
 func _add_mission_row(mission: Dictionary) -> void:
+    var card := PremiumUI.card(Color(0.8, 0.24, 1.0, 1.0), 156)
     var row := HBoxContainer.new()
-    row.custom_minimum_size = Vector2(0, 96)
     row.add_theme_constant_override("separation", 18)
-    var icon := Label.new()
-    icon.custom_minimum_size = Vector2(48, 0)
-    icon.text = "[]"
-    icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    icon.add_theme_font_size_override("font_size", 28)
+    card.add_child(row)
+    var icon := PremiumUI.label("TASK", 24, Color(1.0, 0.76, 0.05, 1.0))
+    icon.custom_minimum_size = Vector2(82, 0)
     row.add_child(icon)
-    var text := Label.new()
+    var text := VBoxContainer.new()
     text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    text.add_theme_constant_override("separation", 8)
     var progress := int(mission.get("progress", 0))
     var target := int(mission.get("target", 1))
     var reward: Dictionary = mission.get("reward", {})
-    text.text = "%s  %d/%d  +%dc +%d XP" % [
-        str(mission.get("title", "Mission")),
-        progress,
-        target,
-        int(reward.get("coins", 0)),
-        int(reward.get("xp", 0)),
-    ]
-    text.add_theme_font_size_override("font_size", 26)
+    text.add_child(PremiumUI.label(str(mission.get("title", "Mission")).to_upper(), 28, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    text.add_child(PremiumUI.label("+%d COINS  +%d XP" % [int(reward.get("coins", 0)), int(reward.get("xp", 0))], 20, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    text.add_child(PremiumUI.progress(progress, target))
     row.add_child(text)
-    var button := Button.new()
-    button.custom_minimum_size = Vector2(150, 70)
     var completed := bool(mission.get("completed", false))
     var claimed := bool(mission.get("claimed", false))
+    var button := PremiumUI.button("CLAIM" if completed and not claimed else ("DONE" if claimed else "LOCKED"), "%d/%d" % [progress, target], Color(0.2, 1.0, 0.38, 1.0), Callable())
+    button.custom_minimum_size = Vector2(150, 96)
     button.text = "CLAIM" if completed and not claimed else ("DONE" if claimed else "LOCKED")
     button.disabled = not completed or claimed
     var id := str(mission.get("id", ""))
     button.pressed.connect(func() -> void: _claim(id))
     row.add_child(button)
-    _list.add_child(row)
-    PremiumUI.style_tree(row)
+    _list.add_child(card)
 
 
 func _claim(id: String) -> void:

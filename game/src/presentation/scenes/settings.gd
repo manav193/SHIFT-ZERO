@@ -23,7 +23,7 @@ var _loading: bool = true
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    _build_modern_layout()
     _settings = ServiceLocator.get_service("ISettingsService")
     _master_slider.value_changed.connect(_on_master_changed)
     _haptics_toggle.toggled.connect(_on_haptics_toggled)
@@ -41,6 +41,70 @@ func _ready() -> void:
     _populate_palettes()
     _load_current_values()
     _loading = false
+
+
+func _build_modern_layout() -> void:
+    var shell := PremiumUI.screen(self, "SETTINGS", _on_back_pressed)
+    _back_btn = shell.back
+    var list: VBoxContainer = shell.list
+    _master_slider = HSlider.new()
+    _master_slider.min_value = 0.0
+    _master_slider.max_value = 1.0
+    _master_slider.step = 0.01
+    _master_value = PremiumUI.label("100%", 24, Color(1.0, 0.933, 0.0, 1.0))
+    list.add_child(_slider_row("MASTER AUDIO", _master_slider, _master_value))
+    _haptics_toggle = _toggle("HAPTICS")
+    list.add_child(_setting_card("HAPTICS", "Touch feedback", _haptics_toggle))
+    _shake_toggle = _toggle("REDUCED SHAKE")
+    list.add_child(_setting_card("REDUCED SHAKE", "Softer camera impact", _shake_toggle))
+    _particles_toggle = _toggle("REDUCED PARTICLES")
+    list.add_child(_setting_card("REDUCED PARTICLES", "Lower visual intensity", _particles_toggle))
+    _battery_toggle = _toggle("30 FPS MODE")
+    list.add_child(_setting_card("30 FPS MODE", "Battery saver", _battery_toggle))
+    _scale_slider = HSlider.new()
+    _scale_slider.min_value = 0.85
+    _scale_slider.max_value = 1.25
+    _scale_slider.step = 0.01
+    _scale_value = PremiumUI.label("100%", 24, Color(1.0, 0.933, 0.0, 1.0))
+    list.add_child(_slider_row("UI SCALE", _scale_slider, _scale_value))
+    _palette_options = OptionButton.new()
+    _palette_options.custom_minimum_size = Vector2(0, 74)
+    list.add_child(_setting_card("COLOR PALETTE", "Accessibility palettes", _palette_options))
+
+
+func _slider_row(title: String, slider: HSlider, value_label: Label) -> PanelContainer:
+    var card := PremiumUI.card(Color(0.0, 0.82, 1.0, 1.0), 132)
+    var row := HBoxContainer.new()
+    row.add_theme_constant_override("separation", 16)
+    card.add_child(row)
+    row.add_child(PremiumUI.label(title, 24, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_child(slider)
+    value_label.custom_minimum_size = Vector2(90, 0)
+    row.add_child(value_label)
+    return card
+
+
+func _setting_card(title: String, sub: String, control: Control) -> PanelContainer:
+    var card := PremiumUI.card(Color(0.0, 0.82, 1.0, 1.0), 122)
+    var row := HBoxContainer.new()
+    row.add_theme_constant_override("separation", 16)
+    card.add_child(row)
+    var text := VBoxContainer.new()
+    text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_child(text)
+    text.add_child(PremiumUI.label(title, 24, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    text.add_child(PremiumUI.label(sub, 18, Color(0.72, 0.84, 0.95, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    control.custom_minimum_size = Vector2(180, 74)
+    row.add_child(control)
+    return card
+
+
+func _toggle(text: String) -> CheckButton:
+    var button := CheckButton.new()
+    button.text = text
+    button.add_theme_font_size_override("font_size", 20)
+    return button
 
 
 func _load_current_values() -> void:

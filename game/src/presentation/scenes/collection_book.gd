@@ -6,12 +6,22 @@ const PremiumUI := preload("res://src/presentation/ui/premium_ui.gd")
 const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 @onready var _back_btn: Button = $Root/Header/BackBtn
-@onready var _list: VBoxContainer = $Root/Scroll/List
+@onready var _list: Container = $Root/Scroll/List
 @onready var _overall: Label = $Root/Overall
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    var shell := PremiumUI.screen(self, "COLLECTION", _on_back_pressed)
+    _back_btn = shell.back
+    _overall = PremiumUI.label("COMPLETION 0%", 44, Color(1.0, 0.933, 0.0, 1.0))
+    shell.list.add_child(_overall)
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 16)
+    grid.add_theme_constant_override("v_separation", 16)
+    shell.list.add_child(grid)
+    _list = grid
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -38,31 +48,14 @@ func _reload() -> void:
 
 
 func _add_row(title: String, data: Dictionary) -> void:
-    var panel := PanelContainer.new()
-    panel.custom_minimum_size = Vector2(0, 108)
-    panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.02, 0.03, 0.06, 0.82)
-    style.border_color = Color(0.0, 0.941, 1.0, 0.55)
-    style.set_border_width_all(2)
-    style.set_corner_radius_all(8)
-    panel.add_theme_stylebox_override("panel", style)
+    var panel := PremiumUI.card(Color(0.0, 0.941, 1.0, 1.0), 158)
     var v := VBoxContainer.new()
     v.add_theme_constant_override("separation", 8)
     panel.add_child(v)
-    var label := Label.new()
-    label.text = "%s  %d/%d" % [title.to_upper(), int(data.get("owned", 0)), int(data.get("total", 1))]
-    label.add_theme_font_size_override("font_size", 30)
-    label.add_theme_color_override("font_color", Color.WHITE)
-    v.add_child(label)
-    var bar := ProgressBar.new()
-    bar.custom_minimum_size = Vector2(0, 24)
-    bar.max_value = maxi(1, int(data.get("total", 1)))
-    bar.value = int(data.get("owned", 0))
-    bar.show_percentage = false
-    v.add_child(bar)
+    v.add_child(PremiumUI.label(title.to_upper(), 24, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    v.add_child(PremiumUI.label("%d / %d" % [int(data.get("owned", 0)), int(data.get("total", 1))], 34, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    v.add_child(PremiumUI.progress(int(data.get("owned", 0)), int(data.get("total", 1))))
     _list.add_child(panel)
-    PremiumUI.style_panel(panel)
 
 
 func _percent(data: Dictionary) -> int:

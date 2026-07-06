@@ -11,7 +11,15 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    var shell := PremiumUI.screen(self, "PROFILE STATS", _on_back_pressed)
+    _back_btn = shell.back
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 16)
+    grid.add_theme_constant_override("v_separation", 16)
+    shell.list.add_child(grid)
+    _list = grid
     _back_btn.pressed.connect(_on_back_pressed)
     _reload()
 
@@ -73,16 +81,15 @@ func _reload() -> void:
         ["Rare Chests", progression.get("rare_chests", 0)],
     ]
     for row in rows:
-        _add_cell(str(row[0]), true)
-        _add_cell(str(row[1]), false)
+        _add_stat_card(str(row[0]), str(row[1]))
     PremiumUI.style_tree(_list)
 
 
-func _add_cell(text: String, is_label: bool) -> void:
-    var label := Label.new()
-    label.custom_minimum_size = Vector2(260, 58)
-    label.text = text
-    label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    label.add_theme_font_size_override("font_size", 28 if is_label else 30)
-    label.add_theme_color_override("font_color", Color(0.75, 0.85, 0.9, 1.0) if is_label else Color(1.0, 0.933, 0.0, 1.0))
-    _list.add_child(label)
+func _add_stat_card(title: String, value: String) -> void:
+    var card := PremiumUI.card(Color(0.0, 0.82, 1.0, 1.0), 126)
+    var v := VBoxContainer.new()
+    v.alignment = BoxContainer.ALIGNMENT_CENTER
+    card.add_child(v)
+    v.add_child(PremiumUI.label(value, 32, Color(1.0, 0.933, 0.0, 1.0)))
+    v.add_child(PremiumUI.label(title.to_upper(), 18, Color(0.72, 0.84, 0.95, 1.0)))
+    _list.add_child(card)

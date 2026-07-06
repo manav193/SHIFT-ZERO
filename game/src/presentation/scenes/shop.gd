@@ -100,15 +100,16 @@ func _build_skin_list() -> void:
     _row_buttons.clear()
     for skin in SkinCatalog.all():
         var button := Button.new()
-        button.custom_minimum_size = Vector2(0, 82)
+        button.custom_minimum_size = Vector2(0, 122)
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-        button.add_theme_font_size_override("font_size", 28)
+        button.add_theme_font_size_override("font_size", 26)
         button.text = _row_text(skin)
         var id := str(skin.id)
         button.pressed.connect(func() -> void: _select_skin(id))
         _skin_list.add_child(button)
         _row_buttons[id] = button
         _wire_button(button)
+        PremiumUI.style_button(button, _skin_accent(skin))
 
 
 func _select_skin(id: String) -> void:
@@ -204,7 +205,7 @@ func _row_text(skin: Dictionary) -> String:
     var fragment_need := RewardEconomy.fragment_requirement(id)
     var price := "%d FRAGS" % fragment_need if fragment_need > 0 else "%d COINS" % int(skin.cost)
     var status := "EQUIPPED" if id == _equipped else ("OWNED" if _is_owned(id) else price)
-    return "%s    %s" % [str(skin.name), status]
+    return "%s\n%s  /  %s" % [str(skin.name).to_upper(), _rarity_text(skin), status]
 
 
 func _state_text(skin: Dictionary) -> String:
@@ -253,6 +254,23 @@ func _effects_text(skin: Dictionary) -> String:
     ]
 
 
+func _skin_accent(skin: Dictionary) -> Color:
+    return skin.get("accent", skin.get("trail", Color(0.0, 0.941, 1.0, 1.0)))
+
+
+func _rarity_text(skin: Dictionary) -> String:
+    var cost := int(skin.get("cost", 0))
+    if RewardEconomy.fragment_requirement(str(skin.id)) > 0:
+        return "LEGENDARY"
+    if cost >= 2500:
+        return "MYTHIC"
+    if cost >= 1200:
+        return "EPIC"
+    if cost >= 500:
+        return "RARE"
+    return "CLASSIC"
+
+
 func _animate_preview(skin: Dictionary) -> void:
     if _preview_tween != null and _preview_tween.is_valid():
         _preview_tween.kill()
@@ -281,4 +299,7 @@ func _button_to(button: Button, target_scale: Vector2, duration: float) -> void:
 
 
 func _update_layout() -> void:
-    _body.columns = 1 if size.x < 900.0 else 2
+    var portrait := size.y > size.x
+    _body.columns = 1 if portrait or size.x < 980.0 else 2
+    _preview_player.scale = Vector2(1.8, 1.8) if portrait else Vector2(1.5, 1.5)
+    _skin_list.add_theme_constant_override("separation", 16 if portrait else 12)

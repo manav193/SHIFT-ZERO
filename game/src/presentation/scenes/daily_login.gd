@@ -12,9 +12,10 @@ const _MAIN_MENU_PATH := "res://src/presentation/scenes/main_menu.tscn"
 
 
 func _ready() -> void:
-    PremiumUI.apply_screen(self)
+    var shell := PremiumUI.screen(self, "DAILY LOGIN", _on_back_pressed)
+    _back_btn = shell.back
+    _list = shell.list
     _back_btn.pressed.connect(_on_back_pressed)
-    _claim_btn.pressed.connect(_on_claim_pressed)
     _reload()
 
 
@@ -24,16 +25,26 @@ func _reload() -> void:
     var progression := _load_progression()
     var day := RewardEconomy.current_login_day(progression)
     var can_claim := RewardEconomy.can_claim_login(progression)
+    _status = PremiumUI.label("", 34, Color(1.0, 0.933, 0.0, 1.0))
+    _list.add_child(_status)
+    _claim_btn = PremiumUI.button("CLAIM", "TODAY'S REWARD", Color(0.2, 1.0, 0.38, 1.0), _on_claim_pressed)
+    _claim_btn.custom_minimum_size = Vector2(0, 112)
+    _list.add_child(_claim_btn)
     _status.text = "DAY %d READY" % day if can_claim else "CLAIMED TODAY"
     _claim_btn.disabled = not can_claim
     for entry in RewardEconomy.login_calendar():
-        var row := Label.new()
-        row.custom_minimum_size = Vector2(0, 66)
-        row.text = "DAY %d   %s%s" % [int(entry.day), str(entry.title), "   NEXT" if int(entry.day) == day else ""]
-        row.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        row.add_theme_font_size_override("font_size", 30)
-        row.add_theme_color_override("font_color", Color(1.0, 0.933, 0.0, 1.0) if int(entry.day) == day else Color(0.75, 0.85, 0.9, 1.0))
-        _list.add_child(row)
+        var accent := Color(1.0, 0.76, 0.05, 1.0) if int(entry.day) == day else Color(0.0, 0.82, 1.0, 1.0)
+        var card := PremiumUI.card(accent, 116)
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 16)
+        card.add_child(row)
+        row.add_child(PremiumUI.label("DAY\n%d" % int(entry.day), 24, accent))
+        var text := VBoxContainer.new()
+        text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        row.add_child(text)
+        text.add_child(PremiumUI.label(str(entry.title).to_upper(), 28, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+        text.add_child(PremiumUI.label("NEXT" if int(entry.day) == day else "CALENDAR REWARD", 18, Color(0.72, 0.84, 0.95, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+        _list.add_child(card)
     PremiumUI.style_tree(_list)
 
 
