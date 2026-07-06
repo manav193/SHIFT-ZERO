@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://shift0floatblk1"]
+[gd_scene format=3 uid="uid://b3qi84w5it7wo"]
 
 [ext_resource type="Script" path="res://src/gameplay/obstacles/obstacle.gd" id="1_obstacle_script"]
 
