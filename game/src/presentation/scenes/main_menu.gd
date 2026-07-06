@@ -26,6 +26,8 @@ var _root: Control
 var _city_root: Node2D
 var _showcase: SkinModel
 var _showcase_trail: Line2D
+var _portrait_scroll: ScrollContainer
+var _landscape_nodes: Array[Control] = []
 var _float_phase: float = 0.0
 var _buttons: Array[Button] = []
 
@@ -82,6 +84,7 @@ func _build_screen() -> void:
     _build_reward_panels()
     _build_booster_strip()
     _build_brand()
+    _build_portrait_layout()
 
 
 func _build_background() -> void:
@@ -154,6 +157,7 @@ func _build_top_bar() -> void:
     top.offset_bottom = 128.0
     top.add_theme_constant_override("separation", 18)
     _root.add_child(top)
+    _landscape_nodes.append(top)
 
     var profile := _panel(Color(0.02, 0.025, 0.05, 0.62), _skin.get("accent", Color.WHITE))
     profile.custom_minimum_size = Vector2(420, 96)
@@ -203,6 +207,7 @@ func _build_left_nav() -> void:
     nav.offset_bottom = 820.0
     nav.add_theme_constant_override("separation", 14)
     _root.add_child(nav)
+    _landscape_nodes.append(nav)
     nav.add_child(_menu_button("[>]  PLAY", "NEW RUN", Color(1.0, 0.76, 0.05, 1.0), _on_play_pressed, true))
     nav.add_child(_menu_button("[S]  SKINS", "%d / %d OWNED" % [(_progression.get("purchased_skins", []) as Array).size(), SkinCatalog.all().size()], Color(0.58, 0.24, 1.0, 1.0), _on_shop_pressed))
     nav.add_child(_menu_button("[$]  SHOP", "FRAGMENTS & SKINS", Color(0.0, 0.72, 1.0, 1.0), _on_shop_pressed, _has_shop_notice()))
@@ -237,6 +242,7 @@ func _build_reward_panels() -> void:
     right.offset_bottom = 850.0
     right.add_theme_constant_override("separation", 18)
     _root.add_child(right)
+    _landscape_nodes.append(right)
     right.add_child(_daily_panel())
     right.add_child(_spin_panel())
     right.add_child(_chest_panel())
@@ -259,6 +265,7 @@ func _build_booster_strip() -> void:
     strip.offset_bottom = -34.0
     strip.add_theme_constant_override("separation", 12)
     _root.add_child(strip)
+    _landscape_nodes.append(strip)
     for booster in RewardEconomy.BOOSTERS:
         var inv: Dictionary = _progression.get("booster_inventory", {})
         var count := int(inv.get(booster, 0))
@@ -284,6 +291,157 @@ func _build_brand() -> void:
     brand.add_theme_font_size_override("font_size", 42)
     brand.add_theme_color_override("font_color", Color.WHITE)
     _root.add_child(brand)
+    _landscape_nodes.append(brand)
+
+
+func _build_portrait_layout() -> void:
+    _portrait_scroll = ScrollContainer.new()
+    _portrait_scroll.name = "PortraitScroll"
+    _portrait_scroll.anchor_right = 1.0
+    _portrait_scroll.anchor_bottom = 1.0
+    _portrait_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    _portrait_scroll.visible = false
+    _root.add_child(_portrait_scroll)
+
+    var margin := MarginContainer.new()
+    margin.name = "SafeMargins"
+    margin.add_theme_constant_override("margin_left", 24)
+    margin.add_theme_constant_override("margin_top", 28)
+    margin.add_theme_constant_override("margin_right", 24)
+    margin.add_theme_constant_override("margin_bottom", 34)
+    margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _portrait_scroll.add_child(margin)
+
+    var v := VBoxContainer.new()
+    v.name = "PortraitStack"
+    v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    v.add_theme_constant_override("separation", 18)
+    margin.add_child(v)
+
+    v.add_child(_portrait_profile_panel())
+    v.add_child(_portrait_currency_grid())
+
+    var play := _menu_button("[>]  PLAY", "NEW RUN", Color(1.0, 0.76, 0.05, 1.0), _on_play_pressed, true)
+    _make_portrait_card(play, 112, 34)
+    v.add_child(play)
+
+    var nav_grid := GridContainer.new()
+    nav_grid.columns = 1
+    nav_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    nav_grid.add_theme_constant_override("h_separation", 12)
+    nav_grid.add_theme_constant_override("v_separation", 12)
+    v.add_child(nav_grid)
+    for button in [
+        _menu_button("[S]  SKINS", "%d / %d OWNED" % [(_progression.get("purchased_skins", []) as Array).size(), SkinCatalog.all().size()], Color(0.58, 0.24, 1.0, 1.0), _on_shop_pressed),
+        _menu_button("[$]  SHOP", "FRAGMENTS & SKINS", Color(0.0, 0.72, 1.0, 1.0), _on_shop_pressed, _has_shop_notice()),
+        _menu_button("[M]  MISSIONS", "DAILY TASKS", Color(0.8, 0.24, 1.0, 1.0), _on_daily_pressed, _can_claim_login()),
+        _menu_button("[A]  ACHIEVEMENTS", "CLAIM REWARDS", Color(1.0, 0.58, 0.05, 1.0), _on_achievements_pressed),
+        _menu_button("[B]  STATISTICS", "YOUR PROGRESS", Color(0.0, 0.82, 0.9, 1.0), _on_statistics_pressed),
+        _menu_button("[T]  THEME GALLERY", "%d / %d UNLOCKED" % [ThemeCatalog.unlocked_theme_ids(_progression).size(), ThemeCatalog.all().size()], Color(0.2, 1.0, 0.38, 1.0), _on_theme_gallery_pressed),
+        _menu_button("[*]  SETTINGS", "AUDIO & ACCESSIBILITY", Color(0.75, 0.85, 1.0, 1.0), _on_settings_pressed),
+    ]:
+        _make_portrait_card(button, 92, 27)
+        nav_grid.add_child(button)
+
+    v.add_child(_portrait_section(_daily_panel()))
+    v.add_child(_portrait_section(_spin_panel()))
+    v.add_child(_portrait_section(_chest_panel()))
+
+    var start := _menu_button("START RUN", str(_theme.get("name", "NEON CITY")).to_upper(), Color(1.0, 0.74, 0.05, 1.0), _on_play_pressed, true)
+    _make_portrait_card(start, 116, 34)
+    v.add_child(start)
+
+    var boosters := _portrait_booster_grid()
+    v.add_child(boosters)
+
+    var quit := _menu_button("QUIT", "EXIT GAME", Color(0.55, 0.62, 0.72, 1.0), _on_quit_pressed)
+    _make_portrait_card(quit, 88, 26)
+    v.add_child(quit)
+
+
+func _portrait_profile_panel() -> PanelContainer:
+    var profile := _panel(Color(0.02, 0.025, 0.05, 0.78), _skin.get("accent", Color.WHITE))
+    profile.custom_minimum_size = Vector2(0, 138)
+    profile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    var row := HBoxContainer.new()
+    row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_theme_constant_override("separation", 16)
+    profile.add_child(row)
+    var portrait_box := Control.new()
+    portrait_box.custom_minimum_size = Vector2(104, 112)
+    row.add_child(portrait_box)
+    var portrait := SkinModel.new()
+    portrait.scale = Vector2(0.72, 0.72)
+    portrait.position = Vector2(52, 58)
+    portrait.apply_skin(_skin)
+    portrait_box.add_child(portrait)
+    var profile_text := VBoxContainer.new()
+    profile_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_child(profile_text)
+    profile_text.add_child(_label("PLAYER", 28, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT))
+    var xp := int(_progression.get("player_xp", 0))
+    var level := int(_progression.get("player_level", ProgressionRules.level_for_total_xp(xp)))
+    profile_text.add_child(_label("LEVEL %d" % level, 24, Color(1.0, 0.933, 0.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    var bar := ProgressBar.new()
+    bar.custom_minimum_size = Vector2(0, 24)
+    bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    bar.max_value = ProgressionRules.required_xp_for_level(level)
+    bar.value = ProgressionRules.xp_into_level(xp)
+    bar.show_percentage = false
+    profile_text.add_child(bar)
+    profile_text.add_child(_label("%d / %d XP" % [ProgressionRules.xp_into_level(xp), ProgressionRules.required_xp_for_level(level)], 20, Color(0.78, 0.9, 1.0, 1.0), HORIZONTAL_ALIGNMENT_LEFT))
+    return profile
+
+
+func _portrait_currency_grid() -> GridContainer:
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 12)
+    grid.add_theme_constant_override("v_separation", 12)
+    for pill in [
+        _resource_pill("$", int(_progression.get("total_coins", 0)), Color(1.0, 0.78, 0.12, 1.0)),
+        _resource_pill("C", _chest_total(), Color(0.2, 0.85, 1.0, 1.0)),
+        _resource_pill("E", _equipped_booster_count(), Color(1.0, 0.169, 0.839, 1.0)),
+        _resource_pill("D", 1 if _can_claim_login() else 0, Color(0.2, 1.0, 0.38, 1.0)),
+    ]:
+        pill.custom_minimum_size = Vector2(0, 78)
+        pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        grid.add_child(pill)
+    return grid
+
+
+func _portrait_booster_grid() -> GridContainer:
+    var grid := GridContainer.new()
+    grid.columns = 5
+    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    grid.add_theme_constant_override("h_separation", 8)
+    grid.add_theme_constant_override("v_separation", 8)
+    for booster in RewardEconomy.BOOSTERS:
+        var inv: Dictionary = _progression.get("booster_inventory", {})
+        var count := int(inv.get(booster, 0))
+        var pill := _panel(Color(0.02, 0.025, 0.05, 0.76), Color(0.0, 0.941, 1.0, 0.8))
+        pill.custom_minimum_size = Vector2(0, 82)
+        pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        var v := VBoxContainer.new()
+        v.alignment = BoxContainer.ALIGNMENT_CENTER
+        pill.add_child(v)
+        v.add_child(_label(_booster_icon(booster), 21, Color(1.0, 0.933, 0.0, 1.0)))
+        v.add_child(_label(str(count), 20, Color.WHITE))
+        grid.add_child(pill)
+    return grid
+
+
+func _portrait_section(panel: Control) -> Control:
+    panel.custom_minimum_size = Vector2(0, 164)
+    panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    return panel
+
+
+func _make_portrait_card(button: Button, height: float, font_size: int) -> void:
+    button.custom_minimum_size = Vector2(0, height)
+    button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    button.add_theme_font_size_override("font_size", font_size)
 
 
 func _daily_panel() -> Control:
@@ -444,40 +602,92 @@ func _button_to(button: Button, target_scale: Vector2, duration: float) -> void:
 func _update_layout() -> void:
     if _root == null:
         return
-    var portrait := size.y > size.x
+    var view_size := get_viewport_rect().size
+    var portrait := view_size.y > view_size.x
+    for node in _landscape_nodes:
+        if is_instance_valid(node):
+            node.visible = not portrait
+    if _portrait_scroll != null:
+        _portrait_scroll.visible = portrait
     var nav := _root.get_node_or_null("Nav") as Control
     var right := _root.get_node_or_null("RewardPanels") as Control
     var boosters := _root.get_node_or_null("Boosters") as Control
+    var top := _root.get_node_or_null("TopBar") as HBoxContainer
     if portrait:
+        if _portrait_scroll != null:
+            _portrait_scroll.offset_left = 0.0
+            _portrait_scroll.offset_top = 0.0
+            _portrait_scroll.offset_right = 0.0
+            _portrait_scroll.offset_bottom = 0.0
+            var margin := _portrait_scroll.get_node_or_null("SafeMargins") as Control
+            if margin != null:
+                margin.custom_minimum_size = Vector2(view_size.x, 0.0)
         if nav != null:
             nav.offset_left = 24
             nav.offset_top = 360
-            nav.offset_right = minf(size.x - 24, 420)
-            nav.offset_bottom = size.y - 210
+            nav.offset_right = minf(view_size.x - 24, 420)
+            nav.offset_bottom = view_size.y - 210
         if right != null:
-            right.offset_left = -minf(size.x - 48, 460)
+            right.offset_left = -minf(view_size.x - 48, 460)
             right.offset_top = 360
             right.offset_right = -24
-            right.offset_bottom = size.y - 210
+            right.offset_bottom = view_size.y - 210
         if _showcase != null:
-            _showcase.position = Vector2(size.x * 0.5, 260)
-            _showcase.scale = Vector2(2.0, 2.0)
+            _showcase.position = Vector2(view_size.x * 0.5, 255)
+            _showcase.scale = Vector2(1.85, 1.85)
+            _showcase.modulate = Color(1.0, 1.0, 1.0, 0.32)
+        if _showcase_trail != null:
+            _showcase_trail.modulate = Color(1.0, 1.0, 1.0, 0.24)
         if boosters != null:
             boosters.offset_top = -138
     else:
+        var compact := view_size.x < 1500.0
+        if top != null:
+            top.offset_left = 22.0
+            top.offset_top = 18.0
+            top.offset_right = -22.0
+            top.offset_bottom = 112.0
+            top.add_theme_constant_override("separation", 10 if compact else 18)
+            for child in top.get_children():
+                if child is Control:
+                    (child as Control).scale = Vector2.ONE
+            if top.get_child_count() >= 4:
+                (top.get_child(0) as Control).custom_minimum_size = Vector2(315, 82) if compact else Vector2(420, 96)
+                (top.get_child(1) as Control).custom_minimum_size = Vector2(130, 58) if compact else Vector2(180, 64)
+                (top.get_child(2) as Control).custom_minimum_size = Vector2(130, 58) if compact else Vector2(180, 64)
+                (top.get_child(3) as Control).custom_minimum_size = Vector2(130, 58) if compact else Vector2(180, 64)
         if nav != null:
             nav.offset_left = 28
-            nav.offset_top = 150
-            nav.offset_right = 348
-            nav.offset_bottom = 820
+            nav.offset_top = 126 if compact else 150
+            nav.offset_right = 322 if compact else 348
+            nav.offset_bottom = view_size.y - 22 if compact else 820
+            nav.add_theme_constant_override("separation", 8 if compact else 14)
+            for child in nav.get_children():
+                if child is Button:
+                    (child as Button).custom_minimum_size = Vector2(0, 44) if compact else Vector2(0, 78)
+                    (child as Button).add_theme_font_size_override("font_size", 18 if compact else 28)
         if right != null:
-            right.offset_left = -520
-            right.offset_top = 150
+            right.offset_left = -430 if compact else -520
+            right.offset_top = 126 if compact else 150
             right.offset_right = -28
-            right.offset_bottom = 850
+            right.offset_bottom = view_size.y - 24 if compact else 850
+            right.add_theme_constant_override("separation", 10 if compact else 18)
+            for child in right.get_children():
+                if child is Control:
+                    if compact:
+                        (child as Control).custom_minimum_size = Vector2(0, 78) if child is Button else Vector2(0, 92)
+                    else:
+                        (child as Control).custom_minimum_size = Vector2(0, 110) if child is Button else Vector2(0, 150)
+                if child is Button:
+                    (child as Button).add_theme_font_size_override("font_size", 22 if compact else 28)
+        if boosters != null:
+            boosters.visible = not compact
         if _showcase != null:
-            _showcase.position = Vector2(size.x * 0.5, size.y * 0.56)
-            _showcase.scale = Vector2(3.0, 3.0)
+            _showcase.position = Vector2(view_size.x * 0.5, view_size.y * 0.56)
+            _showcase.scale = Vector2(2.35, 2.35) if compact else Vector2(3.0, 3.0)
+            _showcase.modulate = Color.WHITE
+        if _showcase_trail != null:
+            _showcase_trail.modulate = Color.WHITE
 
 
 func _can_claim_login() -> bool:

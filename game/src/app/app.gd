@@ -125,6 +125,7 @@ func _apply_settings() -> void:
         var idx := AudioServer.get_bus_index(bus_name)
         if idx >= 0:
             AudioServer.set_bus_volume_db(idx, linear_to_db(clampf(value, 0.0, 1.0)))
+    Engine.max_fps = 30 if bool(current.get("battery_30fps", false)) else 60
 
 
 func _wire_settings_persistence() -> void:

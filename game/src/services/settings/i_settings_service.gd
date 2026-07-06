@@ -24,6 +24,10 @@ static func default_settings() -> Dictionary:
         # accessibility
         "color_palette_id": "default_neon",     # default_neon | deuteranopia | protanopia | tritanopia | high_contrast
         "visual_effects_level": 3,              # 0 (reduce-motion) .. 3 (full)
+        "ui_scale": 1.0,                        # 0.85 .. 1.25
+        "reduced_screen_shake": false,
+        "reduced_particles": false,
+        "battery_30fps": false,
         "haptics_enabled": true,
         "haptics_strength": 1,                  # 0..2
         # audio

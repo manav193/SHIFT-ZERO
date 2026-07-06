@@ -26,6 +26,10 @@ var _shake_decay: float = 1.4
 var _shake_max_offset: float = 80.0
 var _impact_trauma: float = 0.65
 var _design_view_height: float = 2400.0
+var _settings: Object
+var _shake_scale: float = 1.0
+var _boss_zoom_bias: float = 0.0
+var _drift_phase: float = 0.0
 
 # Trauma is 0..1; visible shake = trauma^2 for a punchy feel.
 var _trauma: float = 0.0
@@ -33,6 +37,8 @@ var _shake_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+    _settings = ServiceLocator.get_service("ISettingsService") if ServiceLocator.has("ISettingsService") else null
+    _reload_accessibility()
     _reload_tunables()
     _shake_rng.randomize()
     EventBus.subscribe(Events.REMOTE_CONFIG_ACTIVATED, _on_remote_config_activated)
@@ -40,7 +46,9 @@ func _ready() -> void:
     EventBus.subscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flipped)
     EventBus.subscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
     EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
+    EventBus.subscribe(Events.SETTINGS_CHANGED, _on_settings_changed)
     # We do smoothing ourselves so shake can offset the rendered position
     # without being smoothed away.
     position_smoothing_enabled = false
@@ -59,7 +67,9 @@ func _exit_tree() -> void:
     EventBus.unsubscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.unsubscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flipped)
     EventBus.unsubscribe(Events.BOSS_WARNING, _on_boss_warning)
+    EventBus.unsubscribe(Events.BOSS_STARTED, _on_boss_started)
     EventBus.unsubscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
+    EventBus.unsubscribe(Events.SETTINGS_CHANGED, _on_settings_changed)
 
 
 func _process(delta: float) -> void:
@@ -70,6 +80,8 @@ func _process(delta: float) -> void:
         desired.x = _target.position.x + _dynamic_look_ahead()
     if follow_y:
         desired.y = _target.position.y
+    _drift_phase += delta
+    desired += Vector2(sin(_drift_phase * 0.85) * 12.0, cos(_drift_phase * 0.55) * 8.0)
     var t: float = 1.0 - exp(-_smoothing_speed * delta)
     _base_position = _base_position.lerp(desired, t)
     _update_shake(delta)
@@ -80,7 +92,7 @@ func _process(delta: float) -> void:
 ## Public API. `intensity` is a 0..1 additive trauma bump. Duration is
 ## implicit -- trauma decays over `_shake_decay` per second.
 func shake(intensity: float, _duration_s: float = 0.0) -> void:
-    _trauma = clampf(_trauma + intensity, 0.0, 1.0)
+    _trauma = clampf(_trauma + intensity * _shake_scale, 0.0, 1.0)
 
 
 func _update_shake(delta: float) -> void:
@@ -112,7 +124,13 @@ func _on_boss_warning(_p: Dictionary) -> void:
     shake(0.12)
 
 
+func _on_boss_started(_p: Dictionary) -> void:
+    _boss_zoom_bias = 0.08
+    shake(0.22)
+
+
 func _on_boss_defeated(_p: Dictionary) -> void:
+    _boss_zoom_bias = 0.0
     shake(0.35)
 
 
@@ -147,8 +165,12 @@ func _update_responsive_zoom() -> void:
     var viewport_height := float(get_viewport_rect().size.y)
     if viewport_height <= 0.0:
         return
-    var target_zoom := clampf(viewport_height / _design_view_height, 0.45, 1.0)
-    zoom = Vector2(target_zoom, target_zoom)
+    var speed := 0.0
+    if _target is CharacterBody2D:
+        speed = abs((_target as CharacterBody2D).velocity.x)
+    var speed_zoom_out := clampf(speed / 3600.0, 0.0, 0.14)
+    var target_zoom := clampf(viewport_height / _design_view_height - speed_zoom_out - _boss_zoom_bias, 0.42, 1.0)
+    zoom = zoom.lerp(Vector2(target_zoom, target_zoom), 0.08)
 
 
 func _dynamic_look_ahead() -> float:
@@ -158,3 +180,14 @@ func _dynamic_look_ahead() -> float:
     var speed_bonus := clampf(speed * 0.28, 0.0, 220.0)
     _look_ahead_x = lerpf(_look_ahead_x, _base_look_ahead_x + speed_bonus, 0.08)
     return _look_ahead_x
+
+
+func _on_settings_changed(_payload: Dictionary) -> void:
+    _reload_accessibility()
+
+
+func _reload_accessibility() -> void:
+    if _settings == null:
+        _shake_scale = 1.0
+        return
+    _shake_scale = 0.35 if bool(_settings.get_value("reduced_screen_shake", false)) else 1.0

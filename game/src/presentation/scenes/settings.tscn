@@ -20,7 +20,7 @@ anchor_bottom = 1.0
 
 [node name="V" type="VBoxContainer" parent="Center"]
 custom_minimum_size = Vector2(720, 0)
-theme_override_constants/separation = 32
+theme_override_constants/separation = 22
 alignment = 1
 
 [node name="Title" type="Label" parent="Center/V"]
@@ -57,12 +57,70 @@ theme_override_font_sizes/font_size = 34
 theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
 
 [node name="HapticsToggle" type="CheckButton" parent="Center/V"]
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(0, 86)
 text = "HAPTICS"
 button_pressed = true
 theme_override_font_sizes/font_size = 38
 
+[node name="ShakeToggle" type="CheckButton" parent="Center/V"]
+custom_minimum_size = Vector2(0, 86)
+text = "REDUCED SCREEN SHAKE"
+theme_override_font_sizes/font_size = 34
+
+[node name="ParticlesToggle" type="CheckButton" parent="Center/V"]
+custom_minimum_size = Vector2(0, 86)
+text = "REDUCED PARTICLES"
+theme_override_font_sizes/font_size = 34
+
+[node name="BatteryToggle" type="CheckButton" parent="Center/V"]
+custom_minimum_size = Vector2(0, 86)
+text = "30 FPS BATTERY MODE"
+theme_override_font_sizes/font_size = 34
+
+[node name="ScaleRow" type="HBoxContainer" parent="Center/V"]
+custom_minimum_size = Vector2(0, 86)
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="ScaleLabel" type="Label" parent="Center/V/ScaleRow"]
+custom_minimum_size = Vector2(190, 0)
+text = "UI SCALE"
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.75, 0.85, 0.9, 1)
+
+[node name="ScaleSlider" type="HSlider" parent="Center/V/ScaleRow"]
+custom_minimum_size = Vector2(360, 0)
+min_value = 0.85
+max_value = 1.25
+step = 0.05
+value = 1.0
+
+[node name="ScaleValue" type="Label" parent="Center/V/ScaleRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 0.169, 0.839, 1)
+
+[node name="PaletteRow" type="HBoxContainer" parent="Center/V"]
+custom_minimum_size = Vector2(0, 86)
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="PaletteLabel" type="Label" parent="Center/V/PaletteRow"]
+custom_minimum_size = Vector2(260, 0)
+text = "COLOR PALETTE"
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.75, 0.85, 0.9, 1)
+
+[node name="PaletteOptions" type="OptionButton" parent="Center/V/PaletteRow"]
+custom_minimum_size = Vector2(390, 72)
+theme_override_font_sizes/font_size = 30
+
 [node name="BackBtn" type="Button" parent="Center/V"]
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 104)
 text = "BACK"
 theme_override_font_sizes/font_size = 42

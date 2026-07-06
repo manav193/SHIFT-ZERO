@@ -14,6 +14,7 @@ var _collected: bool = false
 var _origin_y: float = 0.0
 var _phase: float = 0.0
 var _face_color: Color = Color(1.0, 0.84, 0.0, 1.0)
+var _spark: Polygon2D
 
 
 func _ready() -> void:
@@ -22,6 +23,7 @@ func _ready() -> void:
     body_entered.connect(_on_body_entered)
     _origin_y = position.y
     _phase = randf() * TAU
+    _build_spark()
 
 
 func _process(delta: float) -> void:
@@ -30,6 +32,10 @@ func _process(delta: float) -> void:
     _phase += delta * 5.0
     position.y = _origin_y + sin(_phase) * 18.0
     scale.x = 0.75 + abs(sin(_phase * 1.8)) * 0.5
+    modulate.a = 0.82 + abs(sin(_phase * 2.3)) * 0.18
+    if _spark != null:
+        _spark.rotation += delta * 5.5
+        _spark.scale = Vector2.ONE * (0.8 + abs(sin(_phase * 2.0)) * 0.4)
     _magnet_pull(delta)
 
 
@@ -43,6 +49,8 @@ func apply_theme_color(color: Color) -> void:
         var glow_color := _face_color
         glow_color.a = 0.28
         (glow as Polygon2D).color = glow_color
+    if _spark != null:
+        _spark.color = Color(_face_color.r, _face_color.g, _face_color.b, 0.58)
 
 
 func _magnet_pull(delta: float) -> void:
@@ -71,4 +79,26 @@ func _on_body_entered(body: Node) -> void:
         "position": global_position,
         "t_ms": Time.get_ticks_msec(),
     })
-    queue_free()
+    var tween := create_tween()
+    tween.set_trans(Tween.TRANS_BACK)
+    tween.set_ease(Tween.EASE_IN)
+    tween.tween_property(self, "scale", Vector2(1.55, 1.55), 0.08)
+    tween.parallel().tween_property(self, "modulate:a", 0.0, 0.1)
+    tween.tween_callback(queue_free)
+
+
+func _build_spark() -> void:
+    _spark = Polygon2D.new()
+    _spark.polygon = PackedVector2Array([
+        Vector2(0.0, -38.0),
+        Vector2(7.0, -7.0),
+        Vector2(38.0, 0.0),
+        Vector2(7.0, 7.0),
+        Vector2(0.0, 38.0),
+        Vector2(-7.0, 7.0),
+        Vector2(-38.0, 0.0),
+        Vector2(-7.0, -7.0),
+    ])
+    _spark.color = Color(1.0, 0.933, 0.0, 0.48)
+    _spark.z_index = -1
+    add_child(_spark)

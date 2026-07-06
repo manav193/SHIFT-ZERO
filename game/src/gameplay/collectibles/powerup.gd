@@ -27,6 +27,7 @@ func _process(delta: float) -> void:
     _phase += delta * 3.0
     position.y = _origin_y + sin(_phase) * 24.0
     rotation = sin(_phase) * 0.18
+    scale = Vector2.ONE * (1.0 + abs(sin(_phase * 1.6)) * 0.12)
 
 
 func apply_theme_color(color: Color) -> void:
@@ -54,4 +55,9 @@ func _on_body_entered(body: Node) -> void:
         "duration_s": duration_s,
         "position": global_position,
     })
-    queue_free()
+    var tween := create_tween()
+    tween.set_trans(Tween.TRANS_BACK)
+    tween.set_ease(Tween.EASE_IN)
+    tween.tween_property(self, "scale", Vector2(1.8, 1.8), 0.1)
+    tween.parallel().tween_property(self, "modulate:a", 0.0, 0.1)
+    tween.tween_callback(queue_free)

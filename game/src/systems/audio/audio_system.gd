@@ -15,11 +15,15 @@ const _POOL_SIZE := 8
 var _players: Array[AudioStreamPlayer] = []
 var _next_idx: int = 0
 var _streams: Dictionary = {}   # cue_id (String) -> AudioStreamWAV
+var _ambient_a: AudioStreamPlayer
+var _ambient_b: AudioStreamPlayer
+var _ambient_use_a: bool = true
 
 
 func _ready() -> void:
     _generate_streams()
     _create_pool()
+    _create_ambient_players()
     EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flip)
     EventBus.subscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.subscribe(Events.RUN_STARTED, _on_run_started)
@@ -85,6 +89,8 @@ func _on_run_level_changed(_p: Dictionary) -> void:
 func _on_world_theme_changed(payload: Dictionary) -> void:
     if not bool(payload.get("instant", false)):
         play("theme", -9.0)
+    var theme: Dictionary = payload.get("theme", {})
+    _crossfade_ambient(str(theme.get("id", "neon_city")))
 
 
 func _on_boss_warning(_payload: Dictionary) -> void:
@@ -106,6 +112,32 @@ func _create_pool() -> void:
         _players.append(p)
 
 
+func _create_ambient_players() -> void:
+    _ambient_a = AudioStreamPlayer.new()
+    _ambient_b = AudioStreamPlayer.new()
+    add_child(_ambient_a)
+    add_child(_ambient_b)
+    _ambient_a.volume_db = -80.0
+    _ambient_b.volume_db = -80.0
+
+
+func _crossfade_ambient(theme_id: String) -> void:
+    var next := _ambient_a if _ambient_use_a else _ambient_b
+    var prev := _ambient_b if _ambient_use_a else _ambient_a
+    _ambient_use_a = not _ambient_use_a
+    next.stream = _ambient_for_theme(theme_id)
+    if next.stream == null:
+        return
+    next.volume_db = -80.0
+    next.play()
+    var tween := create_tween()
+    tween.tween_property(next, "volume_db", -26.0, 0.9)
+    tween.parallel().tween_property(prev, "volume_db", -80.0, 0.9)
+    tween.tween_callback(func() -> void:
+        if prev.playing:
+            prev.stop())
+
+
 func _generate_streams() -> void:
     _streams["flip"] = _sine(880.0, 0.08)
     _streams["land"] = _sine(320.0, 0.10)
@@ -120,6 +152,30 @@ func _generate_streams() -> void:
     _streams["boss_warn"] = _sweep(180.0, 90.0, 0.34)
     _streams["boss_start"] = _sweep(220.0, 620.0, 0.42)
     _streams["boss_win"] = _sweep(420.0, 1200.0, 0.5)
+
+
+func _ambient_for_theme(theme_id: String) -> AudioStreamWAV:
+    var stream: AudioStreamWAV
+    match theme_id:
+        "desert":
+            stream = _sine(146.0, 1.1)
+        "snow":
+            stream = _sine(224.0, 1.1)
+        "forest":
+            stream = _sine(196.0, 1.1)
+        "volcano":
+            stream = _sine(92.0, 1.1)
+        "space":
+            stream = _sine(132.0, 1.1)
+        "cyber_grid":
+            stream = _sine(330.0, 1.1)
+        "ancient_temple":
+            stream = _sine(164.0, 1.1)
+        _:
+            stream = _sine(275.0, 1.1)
+    stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+    stream.loop_end = int(stream.data.size() / 2)
+    return stream
 
 
 func _sine(freq: float, dur: float) -> AudioStreamWAV:

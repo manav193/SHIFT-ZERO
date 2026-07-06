@@ -10,6 +10,10 @@ func test_default_settings_include_all_a11y_keys():
     for key in [
         "color_palette_id",
         "visual_effects_level",
+        "ui_scale",
+        "reduced_screen_shake",
+        "reduced_particles",
+        "battery_30fps",
         "haptics_enabled",
         "haptics_strength",
         "audio_master",

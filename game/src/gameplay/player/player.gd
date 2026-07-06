@@ -53,6 +53,7 @@ var _double_score_announced_expired: bool = true
 
 ## True while the run is RUNNING. Toggled by RUN_STARTED and RUN_FINISHED.
 var _active: bool = false
+var _feel_phase: float = 0.0
 
 ## Was the player on the floor/ceiling last frame? Used for landing detection.
 var _was_on_surface: bool = false
@@ -88,8 +89,10 @@ func _exit_tree() -> void:
 
 func _physics_process(delta: float) -> void:
     if not _active:
+        _update_idle_breath(delta)
         return
     _update_powerup_expiry()
+    _update_player_feel(delta)
     _update_trail()
     _update_boss_gravity_expiry()
     velocity.y += float(_gravity_dir) * _gravity_magnitude * _gravity_mult * _boss_gravity_mult * delta
@@ -288,15 +291,39 @@ func _apply_skin() -> void:
     _model.apply_skin(_skin)
     _trail.default_color = _model.trail_color()
     _trail.width = _model.trail_width()
+    _trail.width_curve = _trail_width_curve()
     _trail.top_level = true
 
 
 func _update_trail() -> void:
-    var points := _model.trail_points(global_position)
+    var points: PackedVector2Array = _model.trail_points(global_position)
     for p in points:
         _trail.add_point(p)
     while _trail.get_point_count() > 28:
         _trail.remove_point(0)
+    var speed: float = abs(velocity.x)
+    _trail.width = lerpf(_trail.width, _model.trail_width() + clampf(speed / 95.0, 0.0, 16.0), 0.12)
+
+
+func _update_player_feel(delta: float) -> void:
+    _feel_phase += delta
+    var airborne: bool = not (is_on_floor() or is_on_ceiling())
+    _model.rotation = lerpf(_model.rotation, clampf(velocity.y / _terminal_velocity, -0.22, 0.22) if airborne else 0.0, 0.12)
+    _model.scale = _model.scale.lerp(Vector2.ONE * (1.0 + sin(_feel_phase * 8.0) * 0.018), 0.08)
+
+
+func _update_idle_breath(delta: float) -> void:
+    _feel_phase += delta
+    if _model != null:
+        _model.scale = Vector2.ONE * (1.0 + sin(_feel_phase * 2.6) * 0.025)
+
+
+func _trail_width_curve() -> Curve:
+    var curve := Curve.new()
+    curve.add_point(Vector2(0.0, 0.0))
+    curve.add_point(Vector2(0.18, 1.0))
+    curve.add_point(Vector2(1.0, 0.0))
+    return curve
 
 
 func _update_powerup_expiry() -> void:

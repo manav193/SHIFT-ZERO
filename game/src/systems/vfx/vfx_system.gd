@@ -12,8 +12,11 @@ extends Node
 const Events := preload("res://src/core/events.gd")
 const SkinCatalog := preload("res://src/core/skin_catalog.gd")
 
+var _settings: Object
+
 
 func _ready() -> void:
+    _settings = ServiceLocator.get_service("ISettingsService") if ServiceLocator.has("ISettingsService") else null
     EventBus.subscribe(Events.PLAYER_GRAVITY_FLIPPED, _on_flipped)
     EventBus.subscribe(Events.PLAYER_LANDED, _on_landed)
     EventBus.subscribe(Events.RUN_FINISHED, _on_run_finished)
@@ -23,6 +26,8 @@ func _ready() -> void:
     EventBus.subscribe(Events.WORLD_THEME_CHANGED, _on_world_theme_changed)
     EventBus.subscribe(Events.BOSS_STARTED, _on_boss_started)
     EventBus.subscribe(Events.BOSS_DEFEATED, _on_boss_defeated)
+    EventBus.subscribe(Events.APP_BOOTED, _on_app_booted)
+    EventBus.subscribe(Events.SETTINGS_CHANGED, _on_settings_changed)
     print("VFX", "vfx system ready")
 
 
@@ -99,6 +104,9 @@ func _burst(pos: Vector2, color: Color, amount: int, speed: float, lifetime: flo
     var parent := _vfx_parent()
     if parent == null:
         return
+    amount = _scaled_amount(amount)
+    if amount <= 0:
+        return
     var p := CPUParticles2D.new()
     p.position = pos
     p.emitting = false
@@ -122,6 +130,9 @@ func _burst(pos: Vector2, color: Color, amount: int, speed: float, lifetime: flo
 func _burst_directional(pos: Vector2, direction: Vector2, color: Color, amount: int, speed: float, lifetime: float) -> void:
     var parent := _vfx_parent()
     if parent == null:
+        return
+    amount = _scaled_amount(amount)
+    if amount <= 0:
         return
     var p := CPUParticles2D.new()
     p.position = pos
@@ -202,3 +213,20 @@ func _current_skin() -> Dictionary:
     var state: Dictionary = result.value
     var progression: Dictionary = state.get("progression", {})
     return SkinCatalog.by_id(str(progression.get("equipped_skin", SkinCatalog.CLASSIC)))
+
+
+func _on_settings_changed(_payload: Dictionary) -> void:
+    _settings = ServiceLocator.get_service("ISettingsService") if ServiceLocator.has("ISettingsService") else null
+
+
+func _on_app_booted(_payload: Dictionary) -> void:
+    _settings = ServiceLocator.get_service("ISettingsService") if ServiceLocator.has("ISettingsService") else null
+
+
+func _scaled_amount(amount: int) -> int:
+    if _settings == null:
+        return amount
+    if bool(_settings.get_value("reduced_particles", false)):
+        return 0
+    var level := int(_settings.get_value("visual_effects_level", 3))
+    return int(round(float(amount) * clampf(float(level) / 3.0, 0.0, 1.0)))
