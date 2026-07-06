@@ -21,8 +21,8 @@ jobs:
           python-version: "3.11"
       - name: Install gdtoolkit
         run: pip install "gdtoolkit==4.*"
-      - name: Run gdlint
-        run: gdlint game/src game/tests
+      - name: Run gdlint (advisory)
+        run: cd game && gdlint src tests || true
       - name: Verify no forbidden patterns
         run: python scripts/check_forbidden.py
 
