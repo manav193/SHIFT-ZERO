@@ -34,8 +34,6 @@ var _idle_amp: float = 0.0
 var _idle_speed: float = 0.0
 var _spawn_scale: Vector2 = Vector2.ONE
 var _theme_palette: Array = []
-var _warning: Line2D
-var _warning_phase: float = 0.0
 
 
 func _ready() -> void:
@@ -48,16 +46,12 @@ func _ready() -> void:
     _idle_speed = randf_range(0.8, 1.6)
     _spawn_scale = scale
     _apply_random_color()
-    _build_warning_outline()
     _play_spawn_in()
 
 
 func _process(delta: float) -> void:
     _idle_phase += delta * _idle_speed
-    _warning_phase += delta * 8.0
     position.y = _origin_y + sin(_idle_phase) * _idle_amp
-    if _warning != null:
-        _warning.modulate.a = 0.22 + abs(sin(_warning_phase)) * 0.46
 
 
 func _on_body_entered(body: Node) -> void:
@@ -66,7 +60,7 @@ func _on_body_entered(body: Node) -> void:
     if not body.is_in_group("player"):
         return
     _triggered = true
-    monitoring = false
+    set_deferred("monitoring", false)
     if body.has_method("consume_shield") and body.consume_shield():
         print("Obstacle", "shield blocked id=%s" % obstacle_id)
         queue_free()
@@ -83,10 +77,8 @@ func _apply_random_color() -> void:
     var palette := _theme_palette if not _theme_palette.is_empty() else _PALETTE
     var color: Color = palette[randi() % palette.size()]
     for child in get_children():
-        if child is CanvasItem and not (child is CollisionShape2D) and child != _warning:
+        if child is CanvasItem and not (child is CollisionShape2D):
             (child as CanvasItem).modulate = color
-    if _warning != null:
-        _warning.default_color = color.lightened(0.32)
 
 
 func apply_theme_palette(palette: Array) -> void:
@@ -102,20 +94,3 @@ func _play_spawn_in() -> void:
     tween.set_ease(Tween.EASE_OUT)
     tween.tween_property(self, "scale", _spawn_scale, 0.24)
     tween.parallel().tween_property(self, "modulate:a", 1.0, 0.18)
-
-
-func _build_warning_outline() -> void:
-    if _warning != null:
-        return
-    _warning = Line2D.new()
-    _warning.closed = true
-    _warning.points = PackedVector2Array([
-        Vector2(-72.0, -72.0),
-        Vector2(72.0, -72.0),
-        Vector2(72.0, 72.0),
-        Vector2(-72.0, 72.0),
-    ])
-    _warning.width = 5.0
-    _warning.default_color = Color(1.0, 1.0, 1.0, 0.45)
-    _warning.z_index = 4
-    add_child(_warning)

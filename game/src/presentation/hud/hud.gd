@@ -25,6 +25,7 @@ const RewardEconomy := preload("res://src/core/reward_economy.gd")
 @export var run_director: NodePath
 @export var modifier_manager: NodePath
 
+@onready var _top: Control = $Top
 @onready var _score_label: Label = $Top/Score
 @onready var _best_label: Label = $Top/Best
 @onready var _distance_label: Label = $Top/Distance
@@ -120,6 +121,12 @@ func _ready() -> void:
     _player_level_label.text = "LV %d" % _player_level
     _update_run_level(0)
     _make_flash()
+    _apply_responsive_layout()
+
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_RESIZED and is_node_ready():
+        _apply_responsive_layout()
 
 
 func _exit_tree() -> void:
@@ -489,6 +496,72 @@ func _make_flash() -> void:
     _flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _flash.color = Color(1.0, 1.0, 1.0, 0.0)
     add_child(_flash)
+
+
+func _apply_responsive_layout() -> void:
+    var view := get_viewport_rect().size
+    if view.x <= 0.0 or view.y <= 0.0:
+        return
+    var landscape := view.x > view.y
+    var ui_scale := _responsive_ui_scale(view, landscape)
+    var safe := _safe_margin()
+    _top.scale = Vector2(ui_scale, ui_scale)
+    _top.offset_left = safe.x
+    _top.offset_top = safe.y
+    _top.offset_right = -safe.x
+    _top.offset_bottom = 430.0 * ui_scale
+    _set_label_size(_score_label, 112 if landscape else 104)
+    _set_label_size(_distance_label, 42 if landscape else 38)
+    _set_label_size(_best_label, 52 if landscape else 46)
+    _set_label_size(_coins_label, 40 if landscape else 36)
+    _set_label_size(_player_level_label, 38 if landscape else 34)
+    _set_label_size(_run_level_label, 38 if landscape else 34)
+    _set_label_size(_run_level_notice, 50 if landscape else 46)
+    _pause_btn.custom_minimum_size = Vector2(150, 120) if landscape else Vector2(140, 112)
+    if landscape:
+        _score_label.offset_top = 16
+        _score_label.offset_bottom = 136
+        _distance_label.offset_top = 132
+        _distance_label.offset_bottom = 190
+        _run_level_label.offset_top = 190
+        _run_level_label.offset_bottom = 248
+    else:
+        _score_label.offset_top = 20
+        _score_label.offset_bottom = 130
+        _distance_label.offset_top = 130
+        _distance_label.offset_bottom = 184
+        _run_level_label.offset_top = 188
+        _run_level_label.offset_bottom = 242
+    _layout_modal(_pause_panel, Vector2(620, 540) * ui_scale)
+    _layout_modal(_go_panel, Vector2(760, 940) * ui_scale)
+
+
+func _responsive_ui_scale(view: Vector2, landscape: bool) -> float:
+    var short_side: float = minf(view.x, view.y)
+    var base := clampf(short_side / 900.0, 1.0, 1.35)
+    return clampf(base + (0.18 if landscape else 0.08), 1.08, 1.55)
+
+
+func _safe_margin() -> Vector2:
+    var margin := Vector2(34.0, 34.0)
+    if DisplayServer.get_name() != "headless":
+        var safe_rect := DisplayServer.get_display_safe_area()
+        var screen := DisplayServer.screen_get_size()
+        if screen.x > 0 and screen.y > 0:
+            margin.x = maxf(margin.x, float(safe_rect.position.x) * 1080.0 / float(screen.x))
+            margin.y = maxf(margin.y, float(safe_rect.position.y) * 2400.0 / float(screen.y))
+    return margin
+
+
+func _set_label_size(label: Label, size_px: int) -> void:
+    label.add_theme_font_size_override("font_size", size_px)
+
+
+func _layout_modal(panel: Control, size_px: Vector2) -> void:
+    panel.offset_left = -size_px.x * 0.5
+    panel.offset_right = size_px.x * 0.5
+    panel.offset_top = -size_px.y * 0.5
+    panel.offset_bottom = size_px.y * 0.5
 
 
 func _flash_screen(color: Color, duration: float) -> void:

@@ -701,9 +701,9 @@ func _update_layout() -> void:
                     (child as Control).scale = Vector2.ONE
             if top.get_child_count() >= 4:
                 (top.get_child(0) as Control).custom_minimum_size = Vector2(315, 82) if compact else Vector2(420, 96)
-                (top.get_child(1) as Control).custom_minimum_size = Vector2(130, 58) if compact else Vector2(180, 64)
-                (top.get_child(2) as Control).custom_minimum_size = Vector2(130, 58) if compact else Vector2(180, 64)
-                (top.get_child(3) as Control).custom_minimum_size = Vector2(130, 58) if compact else Vector2(180, 64)
+                (top.get_child(1) as Control).custom_minimum_size = Vector2(150, 64) if compact else Vector2(180, 64)
+                (top.get_child(2) as Control).custom_minimum_size = Vector2(150, 64) if compact else Vector2(180, 64)
+                (top.get_child(3) as Control).custom_minimum_size = Vector2(150, 64) if compact else Vector2(180, 64)
         if nav != null:
             nav.offset_left = 28
             nav.offset_top = 126 if compact else 150
@@ -712,8 +712,8 @@ func _update_layout() -> void:
             nav.add_theme_constant_override("separation", 8 if compact else 14)
             for child in nav.get_children():
                 if child is Button:
-                    (child as Button).custom_minimum_size = Vector2(0, 44) if compact else Vector2(0, 78)
-                    (child as Button).add_theme_font_size_override("font_size", 18 if compact else 28)
+                    (child as Button).custom_minimum_size = Vector2(0, 56) if compact else Vector2(0, 78)
+                    (child as Button).add_theme_font_size_override("font_size", 23 if compact else 28)
         if right != null:
             right.offset_left = -430 if compact else -520
             right.offset_top = 126 if compact else 150
@@ -723,11 +723,11 @@ func _update_layout() -> void:
             for child in right.get_children():
                 if child is Control:
                     if compact:
-                        (child as Control).custom_minimum_size = Vector2(0, 78) if child is Button else Vector2(0, 92)
+                        (child as Control).custom_minimum_size = Vector2(0, 96) if child is Button else Vector2(0, 106)
                     else:
                         (child as Control).custom_minimum_size = Vector2(0, 110) if child is Button else Vector2(0, 150)
                 if child is Button:
-                    (child as Button).add_theme_font_size_override("font_size", 22 if compact else 28)
+                    (child as Button).add_theme_font_size_override("font_size", 26 if compact else 28)
         if boosters != null:
             boosters.visible = not compact
         if _showcase != null:

@@ -23,6 +23,7 @@ enum State { READY, RUNNING, GAME_OVER }
 
 ## Node whose X-position measures distance. Usually the Player.
 @export var target: NodePath
+@export var auto_start_on_ready: bool = true
 
 var _target: Node2D
 var _state: int = State.READY
@@ -47,6 +48,8 @@ func _ready() -> void:
     EventBus.subscribe(Events.POWERUP_ACTIVATED, _on_powerup_activated)
     EventBus.subscribe(Events.POWERUP_EXPIRED, _on_powerup_expired)
     print("Run", "director ready. state=READY start_x=%.0f" % _start_x)
+    if auto_start_on_ready:
+        call_deferred("_auto_start_if_ready")
 
 
 func _exit_tree() -> void:
@@ -85,6 +88,8 @@ func _on_input_tap(_payload: Dictionary) -> void:
 
 
 func _begin_running() -> void:
+    if _state == State.RUNNING:
+        return
     _state = State.RUNNING
     _score_bonus = 0
     _double_score_active = false
@@ -93,6 +98,11 @@ func _begin_running() -> void:
     # Deferred so RUN_STARTED subscribers activate AFTER the current
     # INPUT_TAP iteration completes.
     EventBus.call_deferred("emit", Events.RUN_STARTED, {"t_ms": Time.get_ticks_msec()})
+
+
+func _auto_start_if_ready() -> void:
+    if _state == State.READY:
+        _begin_running()
 
 
 func _on_run_finished(payload: Dictionary) -> void:
