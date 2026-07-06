@@ -59,9 +59,13 @@ jobs:
           unzip /tmp/godot.zip -d ~/godot
           chmod +x ~/godot/Godot_v4.7-stable_linux.x86_64
       - name: Import project (headless)
-        run: ~/godot/Godot_v4.7-stable_linux.x86_64 --headless --path game --editor --quit || true
+        run: ~/godot/Godot_v4.7-stable_linux.x86_64 --headless --path game --editor --quit
       - name: Run GUT
         run: GODOT_BIN=~/godot/Godot_v4.7-stable_linux.x86_64 bash ./scripts/run_tests.sh
+      - name: Smoke main menu portrait
+        run: ~/godot/Godot_v4.7-stable_linux.x86_64 --headless --path game --resolution 540x1200 res://src/presentation/scenes/main_menu.tscn --quit-after 2
+      - name: Smoke game world landscape
+        run: ~/godot/Godot_v4.7-stable_linux.x86_64 --headless --path game --resolution 1200x540 res://src/gameplay/game_world/game_world.tscn --quit-after 2
 
   perf_smoke:
     name: Perf smoke (headless)
