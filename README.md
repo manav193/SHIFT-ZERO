@@ -4,23 +4,35 @@
 
 SHIFT // ZERO is a mobile-first Godot game foundation built around one-touch gravity shifting, rule-changing modifiers, and a high-contrast HUD language.
 
-[![CI](https://img.shields.io/badge/CI-automated-brightgreen)](.github/workflows/ci.yml)
-[![Engine](https://img.shields.io/badge/Godot-4.3%2B-478cbf)](https://godotengine.org)
+![SHIFT ZERO menu and HUD direction](https://raw.githubusercontent.com/manav193/MY-PORTFOLIO/main/frontend/images/sz_menu.png)
+
+[View the product case study](https://my-portfolio-mu-jade-52.vercel.app/project-shift-zero.html)
 
 ## Core concept
 
-Every run can be reshaped by modifiers such as gravity changes, low-gravity states, time effects, magnetic surfaces, portals, blackout conditions, or altered controls. The project is structured as a reusable game foundation rather than a finished commercial release.
+Every run can be reshaped by modifiers such as gravity changes, low-gravity states, time effects, magnetic surfaces, portals, blackout conditions, or altered controls. The repository currently represents a documented and testable production foundation rather than a finished commercial release.
 
-## Current focus
+## Product direction
 
 - Mobile-first one-touch interaction
-- Godot 4 and GDScript architecture
-- Data-driven gameplay configuration
-- Layered services, systems, gameplay, and presentation code
-- High-contrast HUD and premium UI direction
-- CI checks, linting, dependency rules, and automated tests
-- Offline-first design goals
+- Gravity-shifting core mechanic
+- Rule-changing gameplay modifiers
+- High-contrast HUD designed for rapid readability
+- Offline-first requirements
 - Accessibility-oriented settings and input handling
+- Ethical monetization goals documented before implementation
+
+![SHIFT ZERO screen system](https://raw.githubusercontent.com/manav193/MY-PORTFOLIO/main/frontend/images/sz_screens.png)
+
+## Engineering highlights
+
+- Godot 4 and GDScript architecture
+- Five dependency-checked layers
+- Data-driven gameplay configuration
+- Replaceable service interfaces
+- Seeded randomness and input recording
+- CI checks, linting, forbidden-pattern validation, and automated tests
+- Architecture Decision Records and production roadmap
 
 ## Repository map
 
@@ -40,7 +52,7 @@ Every run can be reshaped by modifiers such as gravity changes, low-gravity stat
 ## Prerequisites
 
 - Godot 4.3 or newer
-- Python 3.11 or newer for repository validation scripts
+- Python 3.11 or newer for validation scripts
 
 ## Run locally
 
@@ -61,8 +73,6 @@ python3 scripts/check_forbidden.py
 ./scripts/run_tests.sh
 ```
 
-Use the current workflow files and scripts as the source of truth if commands evolve.
-
 ## Architecture
 
 ```text
@@ -75,18 +85,9 @@ Presentation -> Gameplay -> Systems -> Services -> Core
 - **Gameplay:** player, modifiers, obstacles, scoring, and rule logic
 - **Presentation:** scenes, HUD, UI kit, VFX, and menu flows
 
-Gameplay values are intended to remain data-driven rather than embedded as magic numbers.
-
 ## Documentation
 
 Start with [docs/README.md](docs/README.md) and the architecture documents under `docs/`.
-
-## Contributing
-
-- Keep changes compatible with CI.
-- Follow the coding standards in `docs/`.
-- Document non-trivial architecture decisions with an ADR.
-- Prefer focused branches and conventional commit messages.
 
 ## License
 
