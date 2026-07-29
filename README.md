@@ -1,71 +1,58 @@
 # SHIFT // ZERO
 
 > **Gravity is your only weapon.**
-> A commercial-quality indie mobile game — one-finger 2D gravity-shift action with rules that rewrite themselves mid-run.
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows/ci.yml) &nbsp;
-[![Engine](https://img.shields.io/badge/Godot-4.3%2B-478cbf)](https://godotengine.org) &nbsp;
-[![Stage](https://img.shields.io/badge/stage-M0%20Foundation-8a2be2)](docs/14_ROADMAP.md)
+SHIFT // ZERO is a mobile-first Godot game foundation built around one-touch gravity shifting, rule-changing modifiers, and a high-contrast HUD language.
 
----
+[![CI](https://img.shields.io/badge/CI-automated-brightgreen)](.github/workflows/ci.yml)
+[![Engine](https://img.shields.io/badge/Godot-4.3%2B-478cbf)](https://godotengine.org)
 
-## What is it?
+## Core concept
 
-Every 20–40 seconds, a **Modifier** rewrites part of the rulebook — gravity flip, low-g, time slow, magnetic walls, portals, blackout, reverse controls — so every run feels fresh. Easy to learn, hard to master.
+Every run can be reshaped by modifiers such as gravity changes, low-gravity states, time effects, magnetic surfaces, portals, blackout conditions, or altered controls. The project is structured as a reusable game foundation rather than a finished commercial release.
 
-- Mobile-first (Android) · fully responsive on tablets, foldables, Chromebooks, desktop web
-- 60 FPS target on 2019 mid-range Android
-- Offline-first — plays 100% without a network
-- Ethical monetization — rewarded ads + Remove-Ads IAP + cosmetics. **Never pay-to-win.**
-- Accessibility built-in: colorblind palettes, reduce-motion, haptic toggle, adjustable audio
+## Current focus
 
----
+- Mobile-first one-touch interaction
+- Godot 4 and GDScript architecture
+- Data-driven gameplay configuration
+- Layered services, systems, gameplay, and presentation code
+- High-contrast HUD and premium UI direction
+- CI checks, linting, dependency rules, and automated tests
+- Offline-first design goals
+- Accessibility-oriented settings and input handling
 
 ## Repository map
 
-```
-shift-zero/
-├── docs/                     ← 16 architecture & design docs (start here)
-│   ├── README.md               overview + index
-│   ├── 00_EXECUTIVE_SUMMARY.md
-│   ├── 01–14_*.md              full pre-production package
-│   ├── 15_M0_ADDENDA.md        user-approved M0 additions
-│   └── decisions/              12 ADRs
-├── game/                     ← Godot 4 project
+```text
+.
+├── docs/                 # Architecture, design, roadmap, and ADRs
+├── game/                 # Godot project
 │   ├── project.godot
-│   ├── src/                    all code (core → services → systems → gameplay → presentation → app)
-│   ├── data/                   designer-tunable resources (config, feature flags, remote-config defaults)
-│   └── tests/unit/             GUT test suite
-├── scripts/                  ← CI-parity + build scripts
-├── .github/                  ← workflows, PR / issue templates
+│   ├── src/
+│   ├── data/
+│   └── tests/
+├── scripts/              # CI-parity and validation scripts
+├── .github/              # Workflows and templates
 └── CHANGELOG.md
 ```
 
----
+## Prerequisites
 
-## Quickstart
+- Godot 4.3 or newer
+- Python 3.11 or newer for repository validation scripts
 
-### Prerequisites
-- **Godot 4.3+** (standard build) — https://godotengine.org/download
-- **Python 3.11+** (for CI-parity checks)
-
-### First-time setup
+## Run locally
 
 ```bash
+git clone https://github.com/manav193/SHIFT-ZERO.git
+cd SHIFT-ZERO
 ./scripts/bootstrap.sh
 ```
 
-This installs `gdtoolkit` (linter) and prints the Godot editor next steps.
+Then import `game/project.godot` into Godot and run the configured main scene.
 
-### Open the project
-
-1. Launch Godot 4.3.
-2. Import `game/project.godot`.
-3. Press **F5** to run the boot scene.
-
-You should see the SHIFT // ZERO splash with `ready · 0.1.0-m0+dev` and see boot logs from `Logger`, `ServiceLocator`, and the analytics/remote-config services in the console.
-
-### Run tests + lint locally (matches CI)
+## Validation
 
 ```bash
 gdlint game/src game/tests
@@ -74,53 +61,33 @@ python3 scripts/check_forbidden.py
 ./scripts/run_tests.sh
 ```
 
----
+Use the current workflow files and scripts as the source of truth if commands evolve.
 
-## Architecture in 30 seconds
+## Architecture
 
-Five strict layers, dependency-checked by CI:
-
-```
-Presentation → Gameplay → Systems → Services → Core
+```text
+Presentation -> Gameplay -> Systems -> Services -> Core
 ```
 
-- **Core** — `EventBus`, `ServiceLocator`, `Logger`, `Config`, `Result`, seeded `RNG`, `TimeSource`
-- **Services** — every external integration behind an interface (`IAnalyticsService`, `IRemoteConfigService`, `ISaveService`, `IAdsService`, `IBillingService`, `ILocalizationService`, `IFeatureFlagsService`, `IInputRecorder`)
-- **Systems** — Input, Haptics, Audio, Camera Director, Physics wrapper
-- **Gameplay** — Player, ObstacleSpawner, ModifierManager, ScoreSystem — *nothing implemented yet*
-- **Presentation** — Scenes, HUD, UIKit, VFX
+- **Core:** configuration, events, results, timing, logging abstractions, and service location
+- **Services:** external integrations behind interfaces
+- **Systems:** input, audio, haptics, camera, physics, and related runtime systems
+- **Gameplay:** player, modifiers, obstacles, scoring, and rule logic
+- **Presentation:** scenes, HUD, UI kit, VFX, and menu flows
 
-Gameplay values are **data-driven** — `GameplayConfig` reads from `data/config/game_config.json` and Remote Config, never from magic numbers.
+Gameplay values are intended to remain data-driven rather than embedded as magic numbers.
 
-Full details: `docs/03_ARCHITECTURE.md`.
+## Documentation
 
----
-
-## Development status
-
-| Milestone | Status |
-|---|---|
-| **M0 — Foundation** | ✅ complete (this commit) |
-| M1 — Core Loop Prototype | ⏳ next |
-| M2 — Vertical Slice | ⏳ |
-| M3 — Content & Meta | ⏳ |
-| M4 — Monetization + Live Services | ⏳ |
-| M5 — Polish, QA, Localization | ⏳ |
-| M6 — Soft Launch → Global Launch | ⏳ |
-
-Full roadmap: `docs/14_ROADMAP.md`.
-
----
+Start with [docs/README.md](docs/README.md) and the architecture documents under `docs/`.
 
 ## Contributing
 
-- All PRs go through CI (lint + layer-deps + unit tests).
-- Follow `docs/07_CODING_STANDARDS.md`.
-- Non-trivial architectural changes require an ADR in `docs/decisions/`.
-- Branch naming: `feat/*`, `fix/*`, `chore/*`, `hotfix/*`. Commits use Conventional Commits.
-
----
+- Keep changes compatible with CI.
+- Follow the coding standards in `docs/`.
+- Document non-trivial architecture decisions with an ADR.
+- Prefer focused branches and conventional commit messages.
 
 ## License
 
-All rights reserved © 2026 SHIFT // ZERO. See `LICENSE`.
+All rights reserved © 2026 SHIFT // ZERO. See [LICENSE](LICENSE).
