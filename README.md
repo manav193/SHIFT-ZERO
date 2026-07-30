@@ -6,7 +6,7 @@ SHIFT // ZERO is a mobile-first Godot game foundation built around one-touch gra
 
 ![SHIFT ZERO menu and HUD direction](https://raw.githubusercontent.com/manav193/MY-PORTFOLIO/main/frontend/images/sz_menu.png)
 
-[View the product case study](https://my-portfolio-mu-jade-52.vercel.app/project-shift-zero.html)
+[View the product case study](https://manavagarwal.me/project-shift-zero.html)
 
 ## Core concept
 
